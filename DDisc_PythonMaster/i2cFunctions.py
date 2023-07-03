@@ -19,8 +19,6 @@ def loadDwf():
     
 def openDevice(dwf):
 
-    
-
     hdwf = c_int()
     dwf.FDwfDeviceOpen(c_int(-1), byref(hdwf))
 
@@ -49,7 +47,7 @@ def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):
 
     dwf.FDwfDigitalI2cSclSet(hdwf, ctypes.c_int(SCL))       # Specifies the DIO channel to use for I2C clock.
     dwf.FDwfDigitalI2cSdaSet(hdwf, ctypes.c_int(SDA))
-    return nak #???
+    return nak 
 
 def i2cWrite(dwf, hdwf, nak, addr, regW, write):
 
@@ -73,7 +71,7 @@ def i2cRead(dwf, hdwf, nak, addr, regR):
 
     dataR = [int(element) for element in bufferR]
 
-    print("Data: ", dataR)
+    print(f'Data in reg {regR}: {dataR}')
     return dataR, nak
     
 #loadDwf()
