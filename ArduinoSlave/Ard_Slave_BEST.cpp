@@ -1,15 +1,16 @@
 #include <Wire.h>
+#include <Wire.h>
 
-#define SlaveAddres 0x45 
+#define SlaveAddres 0x45 // slave address
 #define NumReg 4    //Number of registers
 
-int registers[NumReg]; // Array to store register values
+int registers[NumReg]; // Array to store reg values
 
 void setup() {
   Wire.begin(SlaveAddres); // Initialize I2C communication as a slave
   Wire.onRequest(requestEvent); // Register the requestEvent function to handle incoming requests
   Wire.onReceive(receiveEvent); // Register the receiveEvent function to handle incoming data
-  Serial.begin(9600); // Initialize serial communication for debugging
+  Serial.begin(9600); 
 
   // Initialize register values
   for (int i = 0; i < NumReg; i++) {
@@ -24,7 +25,7 @@ void loop() {
 void receiveEvent(int byteCount) {
   
   if (byteCount >= 2) {
-    int registerIndex = Wire.read(); // Read the register index
+    int registerIndex = Wire.read(); // Read the reg index
     int value = Wire.read(); // Read the value to be written
 
     if (registerIndex >= 0 && registerIndex < NumReg) {
