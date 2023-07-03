@@ -1,8 +1,31 @@
 from WF_SDK import device, supplies     
 import ctypes
-dwf = ctypes.cdll.dwf
+from dwfconstants import *
 
-device_data = device.open()         # WF_SDK file to get the device handle and connect to the DDD
+def loadDwf():
+    if sys.platform.startswith("win"):
+        dwf = cdll.dwf
+    elif sys.platform.startswith("darwin"):
+        dwf = cdll.LoadLibrary("/Library/Frameworks/dwf.framework/dwf")
+    else:
+        dwf = cdll.LoadLibrary("libdwf.so")
+
+    version = create_string_buffer(16)
+    dwf.FDwfGetVersion(version)
+    print("DWF Version: ", version.value)
+    return dwf
+
+hdwf = c_int()
+dwf.FDwfDeviceOpen(c_int(-1), byref(hdwf))
+
+if hdwf.value == 0:
+    print("failed to open device")
+    szerr = create_string_buffer(512)
+    dwf.FDwfGetLastErrorMsg(szerr)
+    print(str(szerr.value))
+    quit()
+
+#device_data = device.open()         # WF_SDK file to get the device handle and connect to the DDD
 
 def minimalist(device_data):
 
@@ -24,6 +47,7 @@ def minimalist(device_data):
 
     dwf.FDwfDigitalI2cWrite(device_data.handle, ctypes.c_int(0x45<<1), buffer, ctypes.c_int(len(data)), ctypes.byref(nak)) 
 
-    device.close(device_data)
+    #device.close(device_data)
+    dwf.FDwfDeviceClose(hdwf)
 
 minimalist(device_data)
