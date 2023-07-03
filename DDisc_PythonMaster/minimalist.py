@@ -1,4 +1,3 @@
-from WF_SDK import device, supplies     
 import ctypes
 import sys
 from dwfconstants import *
