@@ -1,0 +1,28 @@
+1 WriteSequence
+3 NrOfRegs
+	0E 01	CONFIG_T_RS_LSB_MSB
+	0F 40	CONFIG_T_RS_LSB_LSB
+	01 00	LSB_CORR
+3 WaitSequence
+	1 WaitTimeMicroSecs
+1 WriteSequence
+4 NrOfRegs
+	08 0F	SRAM_ADDR_MSB
+	09 FF	SRAM_ADDR_LSB
+	0A 00	SRAM_WDATA_MSB
+	0B 01	SRAM_WDATA_LSB
+3 WaitSequence
+	1 WaitTimeMicroSecs
+1 WriteSequence
+1 NrOfRegs
+	07 02	SRAM_CNTL
+3 WaitSequence
+	1 WaitTimeMicroSecs
+1 WriteSequence
+4 NrOfRegs
+	08 0F	SRAM_ADDR_MSB
+	09 FE	SRAM_ADDR_LSB
+	0A 00	SRAM_WDATA_MSB
+	0B 01	SRAM_WDATA_LSB
+3 WaitSequence
+	1 WaitTimeMicroSecs
