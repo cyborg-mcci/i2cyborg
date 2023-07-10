@@ -53,7 +53,7 @@ while (inc<length):     # While loop to execute the functions of the regVals fil
             print("Data:    ", Data)
            
             # i2c.i2cWrite(dwf, hdwf, nak, address, reg, data)    #
-            nak = i2c.i2cWrite(dwf, hdwf, nak, Addr, REG, Data)
+            nak = i2c.i2cWrite(dwf, hdwf, nak, Addr, iREG, iData)
         
         time.sleep(1e-6)
         inc = inc+2
