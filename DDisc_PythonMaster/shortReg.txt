@@ -13,6 +13,13 @@
 	0B 01	SRAM_WDATA_LSB
 3 WaitSequence
 	1 WaitTimeMicroSecs
+2       ReadSequence
+3       NrOfRegs
+        0E      CORR_LSB
+        0F      CNTL_CHK
+        01      CLK_DIV
+3       WaitSequence
+	100 WaitTimeMicroSecs
 1 WriteSequence
 1 NrOfRegs
 	07 02	SRAM_CNTL
