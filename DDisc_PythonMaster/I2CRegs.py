@@ -29,9 +29,9 @@ while (inc<length):     # While loop to execute the functions of the regVals fil
 
     inc +=1
     
-    if val1 == '1':
+    if val1 == '1':     # WRITE SEQUENCE
 
-        regR = read[inc-1]
+        regRead = read[inc-1]
         regNum = int(regR[0])
         
         inc +=1
@@ -60,7 +60,7 @@ while (inc<length):     # While loop to execute the functions of the regVals fil
     
     elif val1 == '2':   # READ SEQUENCE
 
-        regR = read[inc-1]
+        regRead = read[inc-1]
         regNum = int(regR[0])
             
         inc +=1
@@ -78,7 +78,7 @@ while (inc<length):     # While loop to execute the functions of the regVals fil
             sREG = hexreg[0]
             iREG = int(sREG, 16)
             REG = hex(iREG)
-            print("Register:", REG)   
+            #print("Register:", REG)   
 
             # i2c.i2cRead(dwf, hdwf, nak, slave_address, reg)
             dataR, nak = i2c.i2cRead(dwf, hdwf, nak, Addr, iREG)
