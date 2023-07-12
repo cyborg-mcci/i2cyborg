@@ -44,7 +44,7 @@ def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):
 
     nak  = ctypes.c_int()
     dwf.FDwfDigitalI2cClear(hdwf, ctypes.byref(nak))  # Verifies and tries to solve eventual bus lockup. The argument returns true, non-zero value if the bus is free.
-
+    dwf.FDwfDigitalI2cStretchSet(hdwf, ctypes.c_int(0)) # Disabling clock stretching
     dwf.FDwfDigitalI2cRateSet(hdwf, ctypes.c_double(RateSet))  # Sets the data rate.
 
     dwf.FDwfDigitalI2cSclSet(hdwf, ctypes.c_int(SCL))       # Specifies the DIO channel to use for I2C clock.
