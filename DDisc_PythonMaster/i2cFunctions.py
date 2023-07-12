@@ -49,6 +49,8 @@ def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):
 
     dwf.FDwfDigitalI2cSclSet(hdwf, ctypes.c_int(SCL))       # Specifies the DIO channel to use for I2C clock.
     dwf.FDwfDigitalI2cSdaSet(hdwf, ctypes.c_int(SDA))
+    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 2, ctypes.c_int(0x03)) # Enables Pull Up/Down on DIO24 (bit0=1: 1) and DIO25 (bit1=1: 2) to give 0x03
+    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 3, ctypes.c_int(0x03)) # Sets the DIO24 (bit0) and DIO25 (bit1) to 1 for pull up = 0x03 
     return nak 
 
 def i2cWrite(dwf, hdwf, nak, addr, regW, write):
