@@ -6,7 +6,7 @@ if __name__ == "__main__":
 
     # Initialise some variables
     i2cAddress = 0x20   # I2C address of the DUT
-    i2cRate = 40e3     # I2C clock frequency
+    i2cRate = 10e3     # I2C clock frequency
     i2cSCL = 24         # I2C SCL pin (DIO24)
     i2cSDA = 25         # I2C SDA pin (DIO25)
 
@@ -28,11 +28,11 @@ if __name__ == "__main__":
     input("Lock the CLK_RS at the minimum frequency. Hit ENTER when complete")
 
     # Perform a CLK_RS Clock divider write to slow the output clock
-    while(nak!=0):
+    while(nak.value!=0):
         i2c.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regW=i2cCLKRSReg, write=0x0f)
 
     # Close the Digital Discovery Connection
-    i2c.closeAll(dwf=dwfL, hdwf=dwfH)
+    i2c.closeDevice(dwf=dwfL, hdwf=dwfH)
 
 
 

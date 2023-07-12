@@ -28,6 +28,8 @@ def openDevice(dwf):
         dwf.FDwfGetLastErrorMsg(szerr)
         print(str(szerr.value))
         quit()
+    # Set the logic voltage to 2.5V
+    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 0, c_double(2.5))
     return hdwf
 
 def closeDevice(dwf, hdwf):
