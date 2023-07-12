@@ -30,6 +30,9 @@ def openDevice(dwf):
         quit()
     return hdwf
 
+def closeDevice(dwf, hdwf):
+    dwf.FDwfDeviceClose(hdwf)
+
 
 
 
