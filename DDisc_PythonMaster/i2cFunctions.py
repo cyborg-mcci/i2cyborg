@@ -35,9 +35,6 @@ def closeDevice(dwf, hdwf):
 
 
 
-
-
-
 def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):
 
 
