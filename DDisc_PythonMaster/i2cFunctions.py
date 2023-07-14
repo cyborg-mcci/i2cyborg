@@ -52,7 +52,7 @@ def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):
     dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 2, ctypes.c_int(0x03)) # Enables Pull Up/Down on DIO24 (bit0=1: 1) and DIO25 (bit1=1: 2) to give 0x03
     dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 3, ctypes.c_int(0x03)) # Sets the DIO24 (bit0) and DIO25 (bit1) to 1 for pull up = 0x03 
     
-    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 7, ctypes.c_double(2.5))  # Sets the voltage level on DIO24 (SCL) to 2.5 volts
+    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 7, ctypes.c_double(2.5))  # Sets the voltage level on DIO24 (SCL) to 2.5 volts (i think :p ) 
     dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 8, ctypes.c_double(2.5))  # Sets the voltage level on DIO25 (SDA) to 2.5 volts
     return nak 
 
@@ -66,6 +66,13 @@ def i2cWrite(dwf, hdwf, nak, addr, regW, write):
 
 
     dwf.FDwfDigitalI2cWrite(hdwf, ctypes.c_int(addr<<1), bufferW, ctypes.c_int(len(data)), ctypes.byref(nak)) 
+
+    nak_count = 0
+    if (nak !=0):
+        nak_count +=1
+        if (nak_count>15):
+            print("NAK COUNT OVERFLOW")
+
     return nak
 
 

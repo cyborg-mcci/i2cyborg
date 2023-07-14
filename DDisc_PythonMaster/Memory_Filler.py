@@ -28,4 +28,53 @@ if __name__ == "__main__":
     # Prompt the user to lock at Fmin
     input("Lock the CLK_RS at the minimum frequency. Hit ENTER when complete")
 
+    global fill_inc
+    def filler1: 
+        
+
+
+    fill_inc = 0
+    while(fill_inc < 6):
+        fill_inc +=1
+
+        
+        while(nak.value !=0 and ):
+
+            
+            i2c.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regW=0x07, write=0x00)
+            time.sleep(1.0)
+        
+        while(nak.value !=0):
+
+            
+            i2c.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regW=0x08, write=0x00)
+            time.sleep(1.0)
+
+        while(nak.value !=0):
+
+            
+            i2c.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regW=0x09, write=0x00)
+            time.sleep(1.0)
+
+        while(nak.value !=0 ):
+
+            
+            i2c.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regW=0x0A, write=0x00)
+            time.sleep(1.0)
+
+
+        while(nak.value !=0 ):
+
+            
+            i2c.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regW=0x0B, write=0x01)
+            time.sleep(1.0)
+
+        while(nak.value !=0 ):
+
+            
+            i2c.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regW=0x07, write=0x02)
+            time.sleep(1.0)
+
+
+
     
