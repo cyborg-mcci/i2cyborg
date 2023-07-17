@@ -464,3 +464,6 @@ def __get_info__(device_data):
     device_data.digital.output.max_buffer_size = temp1.value
 
     return device_data
+
+if __name__ == "__main__":
+    print("In Main!")

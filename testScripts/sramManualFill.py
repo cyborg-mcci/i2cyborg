@@ -34,7 +34,7 @@ if __name__ == "__main__":
         time.sleep(1.0)
 
     # Close the Digital Discovery Connection
-    i2c.closeDevice(dwf=dwfL, hdwf=dwfH)
+    i2c.closeDevice(dwf=dwfL)
 
 
 
