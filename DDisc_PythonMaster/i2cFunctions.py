@@ -89,8 +89,27 @@ def i2cRead(dwf, hdwf, nak, addr, regR):
 
     dataR = [int(element) for element in bufferR]
 
-    print('Data in reg {:02X}: {:02X}'.format(regR, dataR))
-    return dataR, nak
+
+    #print('Data in reg {:02X}: {:02X}'.format(regR, dataR[0])) # Commenting out bc I only want the result to print if it acks
+    return dataR[0], nak
+
+def i2cWriteConfirm(dwf, hdwf, nak, addr, reg, data):
+    readVal = 0xFFFF
+    while(readVal != data):
+            # Perform a CLK_RS Clock divider write to slow the output clock
+            nak.value = 1
+            while(nak.value!=0):
+                i2cWrite(dwf=dwf, hdwf=hdwf, nak=nak, addr=addr, regW=reg, write=data)
+                time.sleep(0.1)
+            
+            # Read back the CLK_RS value to confirm
+            nak.value = 1
+            while(nak.value != 0):
+                readVal, nak = i2cRead(dwf=dwf, hdwf=hdwf, nak=nak, addr=addr, regR=reg)
+                print("nak: {:d}\tReg: {:02X}\tValue: {:02X}".format(nak.value, reg, readVal))
+    return nak
+        
+            
     
 #loadDwf()
 
