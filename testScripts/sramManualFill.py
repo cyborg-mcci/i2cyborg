@@ -12,6 +12,7 @@ if __name__ == "__main__":
     i2cSDA = 25         # I2C SDA pin (DIO25)
 
     i2cCLKRSReg = 0x00  # Subaddress of CLK_RS divider control
+    i2cPWRCNTLReg = 0x03
     try: 
         # Load the DWF library
         dwfL = i2c.loadDwf()
@@ -28,18 +29,19 @@ if __name__ == "__main__":
         # Prompt the user to lock at Fmin
         input("Lock the CLK_RS at the minimum frequency. Hit ENTER when complete")
 
-        # Perform a CLK_RS Clock divider write to slow the output clock
-        nak.value = 1
-        while(nak.value!=0):
-            i2c.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regW=i2cCLKRSReg, write=0x0f)
-            time.sleep(0.1)
+
         
-        # Read back the CLK_RS value to confirm
-        readVal = 0x00
-        nak.value = 1
-        while(nak.value != 0):
-            readVal, nak = i2c.i2cRead(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, regR=i2cCLKRSReg)
-            print("nak: {:d}\t Value: {:X}".format(nak, readVal))
+        # Set CLK_RS divider to max value
+        nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cCLKRSReg, data=0x0F)
+        # Disable the CCRO
+        nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cPWRCNTLReg, data=0x00)
+
+        # SRAM Fill Section
+        
+
+
+
+
     except Exception:
         i2c.closeDevice(dwf=dwfL)
 
