@@ -13,6 +13,64 @@ if __name__ == "__main__":
 
     i2cCLKRSReg = 0x00  # Subaddress of CLK_RS divider control
     i2cPWRCNTLReg = 0x03
+
+    # SRAM_CNTL Reg, Masks & Shifts
+    SRAM_CNTL_REG = 0x07
+    SRAM_CNTL_ZM0_ENN_MASK =    0b10000000
+    SRAM_CNTL_ZM1_ENN_MASK =    0b01000000
+    SRAM_CNTL_ZM2_ENN_MASK =    0b00100000
+    SRAM_CNTL_ZM3_ENN_MASK =    0b00010000
+    SRAM_CNTL_SRAM_SEL_MASK =   0b00001100
+    SRAM_CNTL_WR_MASK =         0b00000010
+    SRAM_CNTL_RD_MASK =         0b00000001
+    SRAM_CNTL_ZM0_ENN_SHIFT =   0x07
+    SRAM_CNTL_ZM1_ENN_SHIFT =   0x06
+    SRAM_CNTL_ZM2_ENN_SHIFT =   0x05
+    SRAM_CNTL_ZM3_ENN_SHIFT =   0x04
+    SRAM_CNTL_SRAM_SEL_SHIFT =  0x02
+    SRAM_CNTL_WR_SHIFT =        0x01
+    SRAM_CNTL_RD_SHIFT =        0x00
+
+    # SRAM ADDR Regs
+    SRAM_ADDR_MSB = 0x08
+    SRAM_ADDR_LSB = 0x09
+    SRAM_ADDR_MSB_MASK = 0x0F
+    SRAM_ADDR_LSB_MASK = 0xFF
+    SRAM_ADDR_MSB_SHIFT = 0x00
+    SRAM_ADDR_LSB_SHIFT = 0x00
+    
+    SRAM_ADDR_MSB_DATAMASK = 0x0F00
+    SRAM_ADDR_LSB_DATAMASK = 0x00FF
+    SRAM_ADDR_MSB_DATASHIFT = 0x08
+    SRAM_ADDR_LSB_DATASHIFT = 0x00
+
+    # SRAM WDATA Regs
+    SRAM_WDATA_MSB = 0x0A
+    SRAM_WDATA_LSB = 0x0B
+    SRAM_WDATA_MSB_MASK = 0xFF
+    SRAM_WDATA_LSB_MASK = 0xFF
+    SRAM_WDATA_MSB_SHIFT = 0x00
+    SRAM_WDATA_LSB_SHIFT = 0x00
+
+    SRAM_WDATA_MSB_DATAMASK = 0xFF00
+    SRAM_WDATA_LSB_DATAMASK = 0x00FF
+    SRAM_WDATA_MSB_DATASHIFT = 0x08
+    SRAM_WDATA_LSB_DATASHIFT = 0x00
+
+    # SRAM RDATA Regs
+    SRAM_RDATA_MSB = 0x18
+    SRAM_RDATA_LSB = 0x19
+    SRAM_RDATA_MSB_DATAMASK = 0xFF00
+    SRAM_RDATA_LSB_DATAMASK = 0x00FF
+    SRAM_RDATA_MSB_DATASHIFT = 0x08
+    SRAM_RDATA_LSB_DATASHIFT = 0x00
+
+
+
+    
+    
+
+
     try: 
         # Load the DWF library
         dwfL = i2c.loadDwf()
@@ -37,7 +95,70 @@ if __name__ == "__main__":
         nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cPWRCNTLReg, data=0x00)
 
         # SRAM Fill Section
-        
+        SRAM_SEL = 0x01
+        ZM0_ENN = 0
+        ZM1_ENN = 0
+        ZM2_ENN = 0
+        ZM3_ENN = 0
+        # Setting the initial SRAM_CNTL write for the loop
+        CNTL_WRITE_DEFAULT =  ( SRAM_CNTL_ZM0_ENN_MASK & (ZM0_ENN<<SRAM_CNTL_ZM0_ENN_SHIFT) )         \
+                            | ( SRAM_CNTL_ZM1_ENN_MASK & (ZM1_ENN<<SRAM_CNTL_ZM1_ENN_SHIFT) )       \
+                            | ( SRAM_CNTL_ZM2_ENN_MASK & (ZM2_ENN<<SRAM_CNTL_ZM2_ENN_SHIFT) )       \
+                            | ( SRAM_CNTL_ZM3_ENN_MASK & (ZM3_ENN<<SRAM_CNTL_ZM3_ENN_SHIFT) )       \
+                            | ( SRAM_CNTL_SRAM_SEL_MASK & (SRAM_SEL<<SRAM_CNTL_SRAM_SEL_SHIFT) )    \
+                            | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )                     \
+                            | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) )
+
+        for k in range(0, 4095, 1):
+            # Set WR and RD to zero
+            CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )
+            #Zero out the CNTL reg
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE)
+            
+            # Form the ADDR
+            ADDR_MSB_WRITE = (k & SRAM_ADDR_MSB_DATAMASK) >> SRAM_ADDR_MSB_DATASHIFT
+            ADDR_LSB_WRITE = (k & SRAM_ADDR_LSB_DATAMASK) >> SRAM_ADDR_LSB_DATASHIFT
+
+            # Form the WDATA
+            WDATA = 0xABCD
+            WDATA_MSB_WRITE = (WDATA & SRAM_WDATA_MSB_DATAMASK) >> SRAM_WDATA_MSB_DATASHIFT
+            WDATA_LSB_WRITE = (WDATA & SRAM_WDATA_LSB_DATAMASK) >> SRAM_WDATA_LSB_DATASHIFT
+
+            # Write the ADDR and WDATA
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_ADDR_MSB, data=ADDR_MSB_WRITE)
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_ADDR_LSB, data=ADDR_LSB_WRITE)
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_WDATA_MSB, data=WDATA_MSB_WRITE)
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_WDATA_LSB, data=WDATA_LSB_WRITE)
+
+            # Set the WR flag in CNTL
+            CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b1<<SRAM_CNTL_WR_SHIFT) )
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE)
+
+            # Clear the WR flag in CNTL
+            CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE)
+
+            # Set the RD flag in CNTL
+            CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b1<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE)
+
+            # Read the data from RDATA
+            nak.value = 1
+            while(nak.value != 0):
+                RDATA_MSB, nak = i2c.i2cRead(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_RDATA_MSB)
+
+            nak.value = 1
+            while(nak.value != 0):
+                RDATA_LSB, nak = i2c.i2cRead(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_RDATA_LSB)
+
+            # Format the RDATA
+            RDATA = ( (RDATA_MSB << SRAM_RDATA_MSB_DATASHIFT) & SRAM_RDATA_MSB_DATAMASK) | ( (RDATA_LSB << SRAM_RDATA_LSB_DATASHIFT) & SRAM_RDATA_LSB_DATAMASK)
+
+            print("ADDR: {:04X}\tWDATA:{:04X}\tRDATA:{:04X}".format(k, WDATA, RDATA))
+            
+            
+
+            
 
 
 

@@ -14,6 +14,7 @@ def filler1():
         i2cSDA = 25         # I2C SDA pin (DIO25)
 
         i2cCLKRSReg = 0x00  # Subaddress of CLK_RS divider control
+        
 
         # Load the DWF library
         dwfL = i2c.loadDwf()

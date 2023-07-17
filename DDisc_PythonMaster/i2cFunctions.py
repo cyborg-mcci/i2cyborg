@@ -80,12 +80,12 @@ def i2cWrite(dwf, hdwf, nak, addr, regW, write):
     return nak
 
 
-def i2cRead(dwf, hdwf, nak, addr, regR):
+def i2cRead(dwf, hdwf, nak, addr, reg):
 
 
     bufferR = (ctypes.c_ubyte * 1)()
 
-    dwf.FDwfDigitalI2cWriteRead(hdwf, ctypes.c_int(addr << 1), (c_ubyte*1)(regR), ctypes.c_int(1), bufferR, ctypes.c_int(1), ctypes.byref(nak))
+    dwf.FDwfDigitalI2cWriteRead(hdwf, ctypes.c_int(addr << 1), (c_ubyte*1)(reg), ctypes.c_int(1), bufferR, ctypes.c_int(1), ctypes.byref(nak))
 
     dataR = [int(element) for element in bufferR]
 
@@ -105,7 +105,7 @@ def i2cWriteConfirm(dwf, hdwf, nak, addr, reg, data):
             # Read back the CLK_RS value to confirm
             nak.value = 1
             while(nak.value != 0):
-                readVal, nak = i2cRead(dwf=dwf, hdwf=hdwf, nak=nak, addr=addr, regR=reg)
+                readVal, nak = i2cRead(dwf=dwf, hdwf=hdwf, nak=nak, addr=addr, reg=reg)
                 print("nak: {:d}\tReg: {:02X}\tValue: {:02X}".format(nak.value, reg, readVal))
     return nak
         
