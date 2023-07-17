@@ -50,11 +50,12 @@ def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):
     dwf.FDwfDigitalI2cSclSet(hdwf, ctypes.c_int(SCL))       # Specifies the DIO channel to use for I2C clock.
     dwf.FDwfDigitalI2cSdaSet(hdwf, ctypes.c_int(SDA))
 
-    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 0, ctypes.c_double(2.5))  # Sets the voltage level to 2.5 volts 
+    dwf.FDwfAnalogIOChannelNodeSet(hdwf, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_double(2.5))  # Sets the voltage level to 2.5 volts 
+    dwf.FDwfAnalogIOEnableSet(hdwf, c_int(1))
 
-    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 2, ctypes.c_int(0xFFFF)) # Enables Pull Up/Down on DIO24 (bit0=1: 1) and DIO25 (bit1=1: 2) to give 0x03
-    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 3, ctypes.c_int(0xFFFF)) # Sets the DIO24 (bit0) and DIO25 (bit1) to 1 for pull up = 0x03 
-    dwf.FDwfAnalogIOEnableSet(hdwf, c_int(True))
+    dwf.FDwfAnalogIOChannelNodeSet(hdwf, ctypes.c_int(0), ctypes.c_int(2), ctypes.c_double(0x0003)) # Enables Pull Up/Down on DIO24 (bit0=1: 1) and DIO25 (bit1=1: 2) to give 0x03
+    dwf.FDwfAnalogIOChannelNodeSet(hdwf, ctypes.c_int(0), ctypes.c_int(3), ctypes.c_double(0x0003)) # Sets the DIO24 (bit0) and DIO25 (bit1) to 1 for pull up = 0x03 
+   
     
 
     return nak 
@@ -88,7 +89,7 @@ def i2cRead(dwf, hdwf, nak, addr, regR):
 
     dataR = [int(element) for element in bufferR]
 
-    print(f'Data in reg {regR}: {dataR}')
+    print('Data in reg {:02X}: {:02X}'.format(regR, dataR))
     return dataR, nak
     
 #loadDwf()
