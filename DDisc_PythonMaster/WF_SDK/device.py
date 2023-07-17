@@ -467,3 +467,4 @@ def __get_info__(device_data):
 
 if __name__ == "__main__":
     print("In Main!")
+    open(device=None, config=0)

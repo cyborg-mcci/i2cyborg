@@ -1,7 +1,7 @@
 """
    DWFConstants (definitions file for DWF library)
    Author:  Digilent, Inc.
-   Revision:  2019-10-15
+   Revision:  2021-12-09
 
    Must install:                       
        Python 2.7 or 3
@@ -31,6 +31,8 @@ devidDiscovery   = c_int(2)
 devidDiscovery2  = c_int(3)
 devidDDiscovery  = c_int(4)
 devidADP3X50     = c_int(6)
+devidADP5250     = c_int(8)
+devidDPS3340     = c_int(9)
 
 # device version
 devverEExplorerC   = c_int(2)
@@ -134,6 +136,8 @@ funcNoise    = c_ubyte(6)
 funcPulse    = c_ubyte(7)
 funcTrapezium= c_ubyte(8)
 funcSinePower= c_ubyte(9)
+funcCustomPattern   = c_ubyte(28)
+funcPlayPattern     = c_ubyte(29)
 funcCustom   = c_ubyte(30)
 funcPlay     = c_ubyte(31)
 
@@ -224,6 +228,19 @@ DwfParamAnalogOut       = c_int(7) # 0 disable / 1 enable
 DwfParamFrequency       = c_int(8) # Hz
 DwfParamExtFreq         = c_int(9) # Hz
 DwfParamClockMode       = c_int(10) # 0 internal, 1 output, 2 input, 3 IO
+
+DwfWindowRectangular    = c_int(0)
+DwfWindowTriangular     = c_int(1)
+DwfWindowHamming        = c_int(2)
+DwfWindowHann           = c_int(3)
+DwfWindowCosine         = c_int(4)
+DwfWindowBlackmanHarris = c_int(5)
+DwfWindowFlatTop        = c_int(6)
+DwfWindowKaiser         = c_int(7)
+
+DwfAnalogCouplingDC     = c_int(0)
+DwfAnalogCouplingAC     = c_int(1)
+
 
 # obsolate
 #STS
