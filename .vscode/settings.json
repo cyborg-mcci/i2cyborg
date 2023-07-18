@@ -1,5 +1,8 @@
 {
 
-    "python.analysis.extraPaths": ["${workspaceFolder}/DDisc_PythonMaster/"]
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/DDisc_PythonMaster/"
+    ],
+    "austin.mode": "Wall time"
 
 }

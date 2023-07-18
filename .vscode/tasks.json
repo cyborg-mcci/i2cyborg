@@ -1,0 +1,13 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "austin",
+            "file": "./testScripts/sramManualFill.py",
+            "label": "Profile sramManualFill.py",
+            "options": {
+                "env": {"PYTHONPATH": "${workspaceFolder}/DDisc_PythonMaster/"}
+            }
+        }
+    ]
+}
