@@ -6,13 +6,18 @@ if __name__ == "__main__":
     
 
     # Initialise some variables
-    i2cAddress = 0x20   # I2C address of the DUT
-    i2cRate = 400e3     # I2C clock frequency
-    i2cSCL = 24         # I2C SCL pin (DIO24)
-    i2cSDA = 25         # I2C SDA pin (DIO25)
+    i2cAddress = 0x20       # I2C address of the DUT
+    i2cRate = 100e3         # I2C clock frequency
+    i2cSCL = 24             # I2C SCL pin (DIO24)
+    i2cSDA = 25             # I2C SDA pin (DIO25)
 
-    i2cCLKRSReg = 0x00  # Subaddress of CLK_RS divider control
-    i2cPWRCNTLReg = 0x03
+    i2cCLKRSReg = 0x00      # CLK_RS divider control REG
+    i2cLSBCORRReg = 0x01    # LSB_CORR REG
+    i2cDEBUGReg = 0x02      # DEBUG Control Reg
+    i2cPWRCNTLReg = 0x03    # Power Control REG
+    i2cAFECNTLReg = 0x04    # AFE Control Reg
+    i2cCHANReg = 0x05       # CHAN Control Reg
+
 
     # SRAM_CNTL Reg, Masks & Shifts
     SRAM_CNTL_REG = 0x07
@@ -90,37 +95,40 @@ if __name__ == "__main__":
 
         
         # Set CLK_RS divider to max value
-        #nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cCLKRSReg, data=0x0F)
+        nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cCLKRSReg, data=0x0F)
         # Disable the CCRO
-        #nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cPWRCNTLReg, data=0x00)
+        nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cPWRCNTLReg, data=0x00)
         # Disable the aux output pins
+        nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cDEBUGReg, data=0b00011000)
 
 
         # SRAM Fill Section
         SRAM_SEL_LIST = [0b00, 0b01, 0b10, 0b11]
         for SRAM_SEL in SRAM_SEL_LIST:
-            
-            ZM0_ENN = 0
-            ZM1_ENN = 0
-            ZM2_ENN = 0
-            ZM3_ENN = 0
-            # Setting the initial SRAM_CNTL write for the loop
-            CNTL_WRITE_DEFAULT =  ( SRAM_CNTL_ZM0_ENN_MASK & (ZM0_ENN<<SRAM_CNTL_ZM0_ENN_SHIFT) )         \
-                                | ( SRAM_CNTL_ZM1_ENN_MASK & (ZM1_ENN<<SRAM_CNTL_ZM1_ENN_SHIFT) )       \
-                                | ( SRAM_CNTL_ZM2_ENN_MASK & (ZM2_ENN<<SRAM_CNTL_ZM2_ENN_SHIFT) )       \
-                                | ( SRAM_CNTL_ZM3_ENN_MASK & (ZM3_ENN<<SRAM_CNTL_ZM3_ENN_SHIFT) )       \
-                                | ( SRAM_CNTL_SRAM_SEL_MASK & (SRAM_SEL<<SRAM_CNTL_SRAM_SEL_SHIFT) )    \
-                                | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )                     \
-                                | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) )
-
-            for k in range(4095, 3500, -1):
-                WDATA = 0xABCD
+            for k in range(4095, 0, -1):
+                WDATA = 0x0001
                 RDATA = 0xFFFFFFFF
                 while(RDATA!=WDATA):
+
+                    ZM0_ENN = 0
+                    ZM1_ENN = 0
+                    ZM2_ENN = 0
+                    ZM3_ENN = 0
+                    # Setting the initial SRAM_CNTL write for the loop
+                    CNTL_WRITE_DEFAULT =  ( SRAM_CNTL_ZM0_ENN_MASK & (ZM0_ENN<<SRAM_CNTL_ZM0_ENN_SHIFT) )         \
+                                        | ( SRAM_CNTL_ZM1_ENN_MASK & (ZM1_ENN<<SRAM_CNTL_ZM1_ENN_SHIFT) )       \
+                                        | ( SRAM_CNTL_ZM2_ENN_MASK & (ZM2_ENN<<SRAM_CNTL_ZM2_ENN_SHIFT) )       \
+                                        | ( SRAM_CNTL_ZM3_ENN_MASK & (ZM3_ENN<<SRAM_CNTL_ZM3_ENN_SHIFT) )       \
+                                        | ( SRAM_CNTL_SRAM_SEL_MASK & (SRAM_SEL<<SRAM_CNTL_SRAM_SEL_SHIFT) )    \
+                                        | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )                     \
+                                        | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) )
+
+
+                    # Ensure the CLK divider is still at the correct value for speed
+                    nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cCLKRSReg, data=0x0F, console=0)
                     # Set WR and RD to zero
-                    CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )
-                    #Zero out the CNTL reg
-                    nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE, console=0)
+                    #CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )
+                    #nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE, console=0)
                     
                     # Form the ADDR
                     ADDR_MSB_WRITE = (k & SRAM_ADDR_MSB_DATAMASK) >> SRAM_ADDR_MSB_DATASHIFT
@@ -141,12 +149,13 @@ if __name__ == "__main__":
                     nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE, console=0)
 
                     # Clear the WR flag in CNTL
-                    CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )
-                    nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE, console=0)
+                    #CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b0<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )
+                    #nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE, console=0)
 
                     # Set the RD flag in CNTL
                     CNTL_WRITE = CNTL_WRITE_DEFAULT | ( SRAM_CNTL_RD_MASK & (0b1<<SRAM_CNTL_RD_SHIFT) ) | ( SRAM_CNTL_WR_MASK & (0b0<<SRAM_CNTL_WR_SHIFT) )
                     nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE, console=0)
+
 
                     # Read the data from RDATA
                     nak.value = 1
@@ -157,20 +166,31 @@ if __name__ == "__main__":
                     while(nak.value != 0):
                         RDATA_LSB, nak = i2c.i2cRead(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_RDATA_LSB)
 
+
                     # Format the RDATA
                     RDATA = ( (RDATA_MSB << SRAM_RDATA_MSB_DATASHIFT) & SRAM_RDATA_MSB_DATAMASK) | ( (RDATA_LSB << SRAM_RDATA_LSB_DATASHIFT) & SRAM_RDATA_LSB_DATAMASK)
 
                     print("SRAM: {:02b}\tADDR: {:04X}\tWDATA:{:04X}\tRDATA:{:04X}".format(SRAM_SEL, k, WDATA, RDATA))
+
             
             
 
             
+
+        # Ensure the other important regs are still good
+        for k in range(1,100):
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cCLKRSReg, data=0x0F, console=0)
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cLSBCORRReg, data=0x16, console=0)
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cDEBUGReg, data=0x18, console=0)
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cPWRCNTLReg, data=0x02, console=0)
+            nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cAFECNTLReg, data=0x0B, console=0)
 
 
 
 
     except Exception:
         i2c.closeDevice(dwf=dwfL)
+
 
     # Close the Digital Discovery Connection
     i2c.closeDevice(dwf=dwfL)

@@ -60,10 +60,10 @@ def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):
 
     return nak 
 
-def i2cWrite(dwf, hdwf, nak, addr, regW, write):
+def i2cWrite(dwf, hdwf, nak, addr, reg, data):
 
 
-    data = [regW, write]
+    data = [reg, data]
     bufferW = (ctypes.c_ubyte * len(data))()
     for index in range(0, len(bufferW)):
         bufferW[index] = ctypes.c_ubyte(data[index])
@@ -96,13 +96,13 @@ def i2cRead(dwf, hdwf, nak, addr, reg):
 def i2cWriteConfirm(dwf, hdwf, nak, addr, reg, data, console=1):
     readVal = 0xFFFF
     while(readVal != data):
-            # Perform a CLK_RS Clock divider write to slow the output clock
+            # Perform a write 
             nak.value = 1
             while(nak.value!=0):
-                i2cWrite(dwf=dwf, hdwf=hdwf, nak=nak, addr=addr, regW=reg, write=data)
+                i2cWrite(dwf=dwf, hdwf=hdwf, nak=nak, addr=addr, reg=reg, data=data)
                 #time.sleep(0.05)
             
-            # Read back the CLK_RS value to confirm
+            # Read back value to confirm
             nak.value = 1
             while(nak.value != 0):
                 readVal, nak = i2cRead(dwf=dwf, hdwf=hdwf, nak=nak, addr=addr, reg=reg)
