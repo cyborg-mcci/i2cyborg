@@ -1,4 +1,6 @@
-with open('testScripts/Short_CSV.csv') as file:
+import csv
+
+with open('testScripts/Short_CSV.csv', 'r') as file:
     content = file.readlines()
 length = len(content)
 
@@ -9,30 +11,31 @@ for k in range(length):
 
     if sram_select == '0':
         SRAM_SEL = 0    
-        sram_reg = line[1]
-        wdata = line[2]
+        sram_reg = int(line[2])
+        wdata = int(line[4])
     
     
     elif sram_select =='1':
         SRAM_SEL = 1   
-        sram_reg = line[1]
-        wdata = line[2]
+        sram_reg = int(line[2])
+        wdata = int(line[4])
 
     elif sram_select =='2':
         SRAM_SEL = 2 
-        sram_reg = line[1]
-        wdata = line[2]
+        sram_reg = int(line[2])
+        wdata = int(line[4])
 
 
-    elif sram_select =='1':
+    elif sram_select =='3':
         SRAM_SEL = 1   
-        sram_reg = line[1]
-        wdata = line[2]
+        sram_reg = int(line[2])
+        wdata = int(line[4])
 
     else:
         pass
 
-print("SRAM: {:02b}\tADDR: {:04X}\tsram_reg:{:04X}\tWDATA:{:04X}".format(SRAM_SEL, k, sram_reg, wdata))
+    print("SRAM_SEL: {:02b}\tk: {:04X}\tsram_reg:{:04X}\twdata:{:04X}".format(SRAM_SEL, k, sram_reg, wdata))
+
 
  
 
