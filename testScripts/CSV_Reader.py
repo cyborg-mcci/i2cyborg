@@ -92,8 +92,8 @@ if __name__ == "__main__":
         #nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE, console=0)
                     
         # Form the ADDR
-        ADDR_MSB_WRITE = (k & SRAM_ADDR_MSB_DATAMASK) >> SRAM_ADDR_MSB_DATASHIFT
-        ADDR_LSB_WRITE = (k & SRAM_ADDR_LSB_DATAMASK) >> SRAM_ADDR_LSB_DATASHIFT
+        ADDR_MSB_WRITE = (sram_reg & SRAM_ADDR_MSB_DATAMASK) >> SRAM_ADDR_MSB_DATASHIFT
+        ADDR_LSB_WRITE = (sram_reg & SRAM_ADDR_LSB_DATAMASK) >> SRAM_ADDR_LSB_DATASHIFT
 
         # Form the WDATA
         WDATA_MSB_WRITE = (WDATA & SRAM_WDATA_MSB_DATAMASK) >> SRAM_WDATA_MSB_DATASHIFT
@@ -165,8 +165,6 @@ if __name__ == "__main__":
 
             WDATA = 0x0001
             RDATA = 0xFFFFFFFF
-
-
 
             for line in content:
                 sram_select = line[0]
