@@ -146,6 +146,7 @@ if __name__ == "__main__":
         nak = i2c.i2cConfig(dwf=dwfL, hdwf=dwfH, RateSet=i2cRate, SCL=i2cSCL, SDA=i2cSDA)
 
         # First prompt the user to hit RSTB (Automate this using GPIO later)
+
         input("Press the RSTB button. Hit ENTER when complete")
 
         # Prompt the user to lock at Fmin
@@ -160,7 +161,7 @@ if __name__ == "__main__":
         # Disable the aux output pins
         nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=i2cDEBUGReg, data=0b00011000)
 
-        with open('testScripts/Short_CSV.csv', 'r') as csv_file:
+        with open('testScripts/SRAM_WRITES.csv', 'r') as csv_file:
             content = csv.reader(csv_file)
 
             WDATA = 0x0001
