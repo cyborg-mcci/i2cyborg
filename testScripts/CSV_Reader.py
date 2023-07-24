@@ -7,11 +7,13 @@ if __name__ == "__main__":
     
 
     # Initialise some variables
+    #global i2cAddress
     i2cAddress = 0x20       # I2C address of the DUT
     i2cRate = 100e3         # I2C clock frequency
     i2cSCL = 24             # I2C SCL pin (DIO24)
     i2cSDA = 25             # I2C SDA pin (DIO25)
 
+    #global i2cCLKRSReg, i2cLSBCORRReg, i2cDEBUGReg, i2cPWRCNTLReg, i2cAFECNTLReg, i2cCHANReg
     i2cCLKRSReg = 0x00      # CLK_RS divider control REG
     i2cLSBCORRReg = 0x01    # LSB_CORR REG
     i2cDEBUGReg = 0x02      # DEBUG Control Reg
@@ -70,7 +72,7 @@ if __name__ == "__main__":
     SRAM_RDATA_MSB_DATASHIFT = 0x08
     SRAM_RDATA_LSB_DATASHIFT = 0x00
 
-    def Write_Shenanigans():
+    def Write_Shenanigans(dwfL, dwfH, nak, sramReg, WDATA):
         ZM0_ENN = 0
         ZM1_ENN = 0
         ZM2_ENN = 0
@@ -92,8 +94,8 @@ if __name__ == "__main__":
         #nak = i2c.i2cWriteConfirm(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2cAddress, reg=SRAM_CNTL_REG, data=CNTL_WRITE, console=0)
                     
         # Form the ADDR
-        ADDR_MSB_WRITE = (sram_reg & SRAM_ADDR_MSB_DATAMASK) >> SRAM_ADDR_MSB_DATASHIFT
-        ADDR_LSB_WRITE = (sram_reg & SRAM_ADDR_LSB_DATAMASK) >> SRAM_ADDR_LSB_DATASHIFT
+        ADDR_MSB_WRITE = (sramReg & SRAM_ADDR_MSB_DATAMASK) >> SRAM_ADDR_MSB_DATASHIFT
+        ADDR_LSB_WRITE = (sramReg & SRAM_ADDR_LSB_DATAMASK) >> SRAM_ADDR_LSB_DATASHIFT
 
         # Form the WDATA
         WDATA_MSB_WRITE = (WDATA & SRAM_WDATA_MSB_DATAMASK) >> SRAM_WDATA_MSB_DATASHIFT
@@ -131,7 +133,7 @@ if __name__ == "__main__":
         # Format the RDATA
         RDATA = ( (RDATA_MSB << SRAM_RDATA_MSB_DATASHIFT) & SRAM_RDATA_MSB_DATAMASK) | ( (RDATA_LSB << SRAM_RDATA_LSB_DATASHIFT) & SRAM_RDATA_LSB_DATAMASK)
 
-        print("SRAM: {:02b}\tADDR: {:04X}\tWDATA:{:04X}\tRDATA:{:04X}".format(SRAM_SEL, k, WDATA, RDATA))
+        print("SRAM: {:02b}\tADDR: {:04X}\tWDATA:{:04X}\tRDATA:{:04X}".format(SRAM_SEL, sramReg, WDATA, RDATA))
 
 
 
@@ -168,40 +170,12 @@ if __name__ == "__main__":
             RDATA = 0xFFFFFFFF
 
             for line in content:
-                sram_select = line[0]
+                SRAM_SEL = int(line[0]) 
+                sram_reg = int(line[1])
+                WDATA = int(line[2])
 
-                if sram_select == '0':
-                    SRAM_SEL = 0b00   
-                    sram_reg = int(line[1])
-                    WDATA = int(line[2])
+                Write_Shenanigans(dwfL=dwfL, dwfH=dwfH, nak=nak, sramReg=sram_reg, WDATA=WDATA)
 
-                    Write_Shenanigans()
-                
-                
-                elif sram_select =='1':
-                    SRAM_SEL = 0b01
-                    sram_reg = int(line[1])
-                    WDATA = int(line[2])
-
-                    Write_Shenanigans()
-
-                elif sram_select =='2':
-                    SRAM_SEL = 0b10
-                    sram_reg = int(line[1])
-                    WDATA = int(line[2])
-
-                    Write_Shenanigans()
-
-
-                elif sram_select =='3':
-                    SRAM_SEL = 0b11 
-                    sram_reg = int(line[1])
-                    WDATA = int(line[2])
-
-                    Write_Shenanigans()
-
-                else:
-                    pass
                 # Ensure the other important regs are still good
         
         for k in range(1,100):
