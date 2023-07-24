@@ -1,7 +1,9 @@
 import ctypes
 import sys
-from dwfconstants import *
+import dwfconstants as dwfc
 import time
+
+
 
 def loadDwf():                          # TO LOAD DWF 
     if sys.platform.startswith("win"):
@@ -19,8 +21,9 @@ def loadDwf():                          # TO LOAD DWF
 def closeDevice(dwf):           # TO DSICONNECT DWF DEVICES 
     dwf.FDwfDeviceCloseAll()
 
-def initialiseHdwf(dwf, hdwf, N_samp, CLK_Chan):        # TO GET DEVICE HANDLE AMD CONFIGURE THE DEVICE FOR DATA RECEPTION
-    #print("Opening the Device")
+def openDevice(dwf):
+
+    hdwf = c_int()
     dwf.FDwfDeviceOpen(c_int(-1), byref(hdwf))
 
     if hdwf.value == 0:
@@ -29,17 +32,18 @@ def initialiseHdwf(dwf, hdwf, N_samp, CLK_Chan):        # TO GET DEVICE HANDLE A
         dwf.FDwfGetLastErrorMsg(szerr)
         print(str(szerr.value))
         quit()
-
     # Set the logic voltage to 2.5V
     dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 0, c_double(2.5))
-    #print("Configuring the Digital Input")
-    #print("Putting the device into Record Mode & Configuring")
-    dwf.FDwfDigitalInAcquisitionModeSet(hdwf, acqmodeRecord)  # Setting Record mode
-    dwf.FDwfDigitalInDividerSet(hdwf, c_int(-1))  # Divider needs to be -1 for sync
-    dwf.FDwfDigitalInSampleFormatSet(hdwf, c_int(16))  # Setting to 16 bit per sample format
-    dwf.FDwfDigitalInTriggerPositionSet(hdwf, c_int(N_samp))  # Setting the number of samples to record for
-    dwf.FDwfDigitalInTriggerSet(hdwf, c_int(0), c_int(0), c_int(edge << CLK_Chan), c_int((not edge) << CLK_Chan))  # Setting the trigger edge to rising, the syntax here is ...TriggerSet(hdwf, low, high, rising, falling), channel desired is the bit position
     return hdwf
+
+def acqisitionSetup(dwf, hdwf, N_samp, CLK_Chan, edge):
+    dwf.FDwfDigitalInAcquisitionModeSet(hdwf, dwfc.acqmodeRecord)  # Setting Record mode
+    dwf.FDwfDigitalInDividerSet(hdwf, c_int(-1))  # Divider needs to be -1 for sync
+    dwf.FDwfDigitalInSampleFormatSet(hdwf, c_int(32))  # Setting to 32 bit per sample format
+    dwf.FDwfDigitalInTriggerPositionSet(hdwf, c_int(N_samp))  # Setting the number of samples to record for
+    dwf.FDwfDigitalInTriggerSet(hdwf, c_int(0), c_int(0), c_int(edge << CLK_Chan), c_int((not edge) << CLK_Chan))  # Setting the trigger, the syntax here is ...TriggerSet(hdwf, low, high, rising, falling), channel desired is the bit position
+
+
 
 def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):        # CONFIGURE DEVICE FOR I2C PROTOCOL
 
@@ -110,5 +114,70 @@ def i2cWriteConfirm(dwf, hdwf, nak, addr, reg, data, console=1):     # ROBUST I2
                 if(console): # Flag to only print when desired
                     print("nak: {:d}\tReg: {:02X}\tValue: {:02X}".format(nak.value, reg, readVal))
     return nak
+
+def initialiseSR1():
+    rm = pyvisa.ResourceManager()
+    inst = rm.open_resource('TCPIP0::169.254.109.180::INSTR')
+    print(inst.query("*IDN?"))
+    return inst
+
+def configureSR1(SR1, f_in, Voffs):
+    SR1.write("*CLS") # Clears the status Register
+
+    #First ensuring the channels are off before anything blows up
+    SR1.write(":AnlgGen:Ch(0):On False") # Disables the output 0
+    SR1.write(":AnlgGen:Ch(1):On False") # Disables the output 1
+
+    # Setting the Analog Generator configuration
+    SR1.write(":AnlgGen:ConnectorConfig aoUnbalGnd") # Sets the output channels to use the BNC connector
+    SR1.write(":AnlgGen:Zout aozBal50Un25") # Sets the output impedance to LowZ
+    SR1.write(":AnlgGen:Mono True") # Sets Mono mode, as opposed to stereo mode
+    SR1.write(":AnlgGen:SampleRate agHz512k") # Sets the sample rate of the analog generator
+    SR1.write(":AnlgGen:BurstMode bmNone") # Ensures burst mode is turned off  
+
+    # Channel 0 configuration
+    SR1.write(":AnlgGen:Ch(0):Gain 100 PCT") # Sets the channel gain to 100%
+    SR1.write(":AnlgGen:Ch(0):ClearWaveforms") # Clears any existing waveforms in the channel
+
+    # Configuring the DC Offset
+    chanID_offs = int(SR1.query(":AnlgGen:Ch(0):AddWaveform? awfDC")) # Create a DC Offset and add it to the channel 0. chanID_offs is the ID of this channel
+    SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(chanID_offs, Voffs)) # Sets the DC offset of the offset object on channel 0 to Voffs
+    SR1.write(":AnlgGen:Ch(0):DC({:d}):On True".format(chanID_offs)) # Turns on the DC offset object of channel 0
+
+    chanID_sin = int(SR1.query(":AnlgGen:Ch(0):AddWaveform? awfSine")) # Creates a sine wave object on channel 0. chanID_sin is the ID of this channel
+    SR1.write(":AnlgGen:Ch(0):Sine({:d}):Amp 0.1 VPP".format(chanID_sin)) # Sets an initial sine amplitude of 100mVpp. This will be swept throughout the test
+    SR1.write(":AnlgGen:Ch(0):Sine({:d}):Freq {:.16g} HZ".format(chanID_sin, f_in)) # Sets the frequency of the sine on channel 0. Ensure there's enough precision for coherent sampling
+    SR1.write(":AnlgGen:Ch(0):Sine({:d}):on True".format(chanID_sin)) # Turns on the sine object of channel 0
+
+    chanIDs  = { # Creating a dictionary lookup for the DC offset and sin functions to be returned and used elsewhere in the script
+        'DC':   chanID_offs,
+        'Sine': chanID_sin
+    }
+    return chanIDs
+
+def initialiseSMU():
+    rm = pyvisa.ResourceManager()
+    inst = rm.open_resource("USB0::0x0403::0x6001::FTYUXLL3::RAW")
+    print(inst.query("*IDN?"))
+    return inst
+
+def configureSMU(inst):
+    inst.write("*RST")
+    #inst.write("*CLR")
+    inst.query(":SYST:ERR:ALL?")
+    inst.write(":SYST:BEEP:STAT ON")
+
+    inst.write("OUTP1 OFF")  # Turning off the channel
+
+    inst.write("SOUR1:FUNC:MODE curr")  # Sourcing settings
+    inst.write("SOUR1:CURR:RANG:AUTO ON")
+    inst.write("SOUR1:CURR 0")
+
+
+    #inst.write(":SENS1:FUNC volt")
+    inst.write("SENS1:VOLT:PROT 50") # Measure Settings
+    inst.write("SENS1:VOLT:RANG:AUTO ON")
+
+    # inst.write("TRIG:SOUR AINT")
 
 
