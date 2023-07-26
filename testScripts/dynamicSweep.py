@@ -7,6 +7,7 @@ import math
 import os
 import ctypes
 import matplotlib.pyplot as plt
+import pandas as pa
 
 if __name__ == "__main__":
 
@@ -15,6 +16,7 @@ if __name__ == "__main__":
 
 
     # Stimulation Settings
+    F_ref = 200e6
     f_in = 100e3
     IinDC = 1e-6
     AmplStart_Ipk = 1e-9
@@ -27,7 +29,7 @@ if __name__ == "__main__":
     edge = 1 # 1 for rising edge triggering, 0 for falling edge triggering
 
     # Post-Processing Settings
-    Flock = 200e6
+    
     NBW = 1e6
     outDirName = "outputdata/" + input("Input the Filename and hit Enter to start the acquisition:") #prompting the user for the directory name
     if not os.path.exists(outDirName):
@@ -51,21 +53,36 @@ if __name__ == "__main__":
         SR1 = ddf.initialiseSR1()
         SR1chanIDs = ddf.configureSR1(SR1=SR1, f_in=f_in, Voffs=VinDC)
 
+        # Calculate T_Q
+        T_ref = 1/200e6
+        T_Q = T_ref/66
+
         # Calculate Voltage Sweep Amplitudes
         AmplStart_Vpk = AmplStart_Ipk * Rin
         AmplStop_Vpk = AmplStop_Ipk * Rin
 
         # Creating the Amplitude Sweep
         AmplSweep = np.logspace(math.log10(AmplStart_Vpk), math.log10(AmplStop_Vpk), num=NoAmplSteps, base=10.0)
-        sweepCnt = 0
+
+        # Creating the datapoint vector
+        dataPoints = np.arange(start=0, stop=NoAmplSteps, step=1)
+
+        # Creating the metadata table
+        metaTable = [['dataPoint'] + dataPoints.tolist(), ['Iin_pk'] + (AmplSweep/Rin).tolist(), \
+            ['T_Q'] + [T_Q] * dataPoints.size, ['f_in'] + [f_in] * dataPoints.size, \
+            ['I_DC'] + [IinDC] * dataPoints.size, ['N_samp'] + [N_samp] * dataPoints.size, \
+            ['testTime'] + [time.strftime('%H:%M %d/%b/%Y', time.localtime())] * dataPoints.size]
+
+        # Writing the metadata table to a csv file
+        filename = '{:s}/metadata.csv'.format(outDirName)
+        metaFrame = pa.DataFrame(metaTable)
+        metaFrame = metaFrame.transpose()
+        metaFrame.to_csv(filename, index=False, header=False)
+        
+ 
 
         # Enable the output of the SR1
         SR1.write(":AnlgGen:Ch(0):On True")
-
-        # Creating empty variables to be filled by the loop
-        SNDR = np.zeros(AmplSweep.size)
-        SNR = np.zeros(AmplSweep.size)
-        THD = np.zeros(AmplSweep.size)
 
         sts = ctypes.c_byte()
         rgwSamples = (ctypes.c_uint32 * N_samp)()
@@ -100,14 +117,13 @@ if __name__ == "__main__":
             cSamples += cAvailable.value
 
 
-        for k in AmplSweep: 
-            sweepCnt +=1
-            print("\n\nSetting the amplitude: {:.4f}uApk which translates to {:.6f}Vpk".format(k*1e6/Rin, k))
+        for k in dataPoints: 
+            print("\n\nSetting the amplitude: {:.4f}uApk which translates to {:.6f}Vpk".format(AmplSweep[k]*1e6/Rin, AmplSweep[k]))
 
             # Set the SR1 output amplitude
             SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(SR1chanIDs.get('DC', 0), VinDC)) # Updating the DC offset of the function generator if necessary
-            SR1.write(":AnlgGen:Ch(0):Sine({:d}):Amp {:.12g} VPP".format(SR1chanIDs.get('Sine', 0), (2*k))) # Updating the sine wave amplitude for this element in the sweep
-            time.sleep(0.1)
+            SR1.write(":AnlgGen:Ch(0):Sine({:d}):Amp {:.12g} VPP".format(SR1chanIDs.get('Sine', 0), (2*AmplSweep[k]))) # Updating the sine wave amplitude for this element in the sweep
+            #time.sleep(0.1)
 
             # Arm the acquisition trigger
             dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))
@@ -136,7 +152,7 @@ if __name__ == "__main__":
             #rawOutput = (rawOutput & 0b0000000000001)
             rawOutput = (rawOutput & 0b0111111111110) + ((rawOutput & 0b1000000000000)>>12)
             rawOutput = rawOutput.astype(np.int32)
-            outFilename = "CHAN_DynamicSweep_{:.6f}uA".format(k*1e6/Rin)
+            outFilename = "{:d}".format(k)
             np.savetxt("{:s}/{:s}.csv".format(outDirName, outFilename), rawOutput, fmt="%d", delimiter=",")
             
             

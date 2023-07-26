@@ -1,0 +1,166 @@
+%% Postprocessing Script for the Encoder Output Dynamic Test
+%%  Microelectronic Circuits Centre Ireland (www.mcci.ie)
+% 
+%% 
+% *Filename: *    encoderDynamicProcessing.m
+%%                    
+% *Written by: *  Anthony Wall
+%% 
+% *Created on:*  25th July 2023
+% 
+% *Revised on:*   -
+% 
+% 
+% 
+% *File Description:*
+% 
+%  Postprocessing for the Asynchronous Block
+% 
+% 
+% 
+% _* Copyright 2023 Anthony Wall*_
+
+%% Initialisation Section
+
+clearvars -except nch pch
+global ON OFF fc T kb;
+
+ON = 1;
+
+OFF = 0;
+
+
+fc = 10;
+
+maxNumCompThreads(32);
+
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
+set(groot, 'defaultLegendInterpreter','latex');
+set(groot, 'defaultTextInterpreter','latex');
+
+profile on
+
+%% Parameter Declaration
+
+% Configuration Switches
+plotRaw			= 1; % Plot the raw time domain input data or not
+plotOutTime		= 1; % Plot the NUSDSP output data in time domain or not
+
+% Test Parameters
+f_in = 100e3;
+T_inj = 1/120e6;
+T_Q = T_inj * 66;
+
+% FFT Parameters
+Nwindows = 1;
+Frac_Overlap = inf;
+N_FFTmax = 2^22;
+
+% Metrics Parameters
+NBW = 1e6; % Noise Bandwidth for SNR etc
+f_NF = [100 500]*1e3; % Noisefloor frequency limits to estimate thermal noisefloor
+
+% Postprocessing DSP Parameters
+LSB_CORR = 0;
+
+% Timecode File Readin Parameters
+foldername = 'initial_FreeRun20p3MHz';
+
+datadir = strcat('../outputdata/', foldername, '/');
+
+
+%% Reading in the metadata & Filenames
+
+tmp = sprintf("%smetadata.csv", datadir);
+metaData = readtable(tmp, 'Delimiter', ',', 'ReadVariableNames', true);
+
+dataPoint = metaData.dataPoint;
+Iin_pk = metaData.Iin_pk;
+T_Q = metaData.T_Q;
+f_in = metaData.f_in;
+I_DC = metaData.I_DC;
+
+filenames = dir(strcat(datadir, '*.csv'));
+for k = 1:length(filenames)
+	tmp = regexp(filenames(k).name, '\d+\.csv'); % Removing the metadata file from filenames
+	if(isempty(tmp))
+		filenames(k) = [];
+	end
+end
+
+%% Looping through the files
+fc=fc+1;
+
+for runloop = 1:length(dataPoint)
+    fprintf('Progress: %d/%d points\n\n', runloop, length(dataPoint));
+
+
+    % Extracting the raw data from the data file
+	encRaw = load(strcat(filenames(runloop).folder, '/', sprintf('%d', dataPoint(runloop)), '.csv'));
+	
+    	% Plotting the raw data as a sanity check
+	if(plotRaw)
+		figure(fc)
+		clf
+        hold on
+		plot(0:length(encRaw)-1, encRaw, '-*')
+		grid on
+		title(sprintf('Edge timecounts for $I_{IN}^{pk} = %.3f \\mathrm{\\mu A}$', Iin_pk(runloop)*1e6))
+		xlabel('Sample')
+		ylabel('Time Encoded Count')
+    end
+    
+    % Unwrapping the encoded output
+    dEnc = diff(encRaw);
+    wrapInds = find(dEnc < 0) + 1;
+    encUnwrap = encRaw;
+    for k = 1:length(wrapInds)
+       encUnwrap(wrapInds(k):end) = encUnwrap(wrapInds(k):end) + (2^12);
+    end
+    
+    if(plotRaw)
+       figure(fc)
+       plot(0:length(encUnwrap)-1, encUnwrap, '-o')
+       legend('Wrapped', 'Unwrapped')
+    end
+    
+    % Trimming the enc output to avoid huge data
+    logNenc = floor(log2(max(encUnwrap)));
+    encUnwrap(encUnwrap >= 1.05*min(2^logNenc, N_FFTmax)) = [];
+    
+    
+    % Creating a time vector
+    t = 0:T_Q(runloop):T_Q(runloop)*max(encUnwrap);
+   
+    
+    % Creating an equivalent sampled output
+    DFFout = zeros(size(t));
+    DFFout(encUnwrap) = 1;
+    
+    % Trimming to nearest 2^N
+    Nfft = floor(log2(length(t)));
+    t(1:end-(2^tmp)+1) = [];
+    DFFout(1:end-(2^tmp)+1) = [];
+    
+    % Plotting the equivalent sampled output
+    if(plotRaw)
+       figure(fc+1)
+       clf
+       stairs(t, DFFout, '*-')
+       xlabel('Sampled Time $\mathrm{[s]}$')
+       ylabel('Output')
+       title('Effected Sampled Encoder Output')
+       grid on
+    end
+    
+    % Taking the FFT of the sampled output
+	[Pout, f{runloop}] = pwelch(DFFout, blackmanharris(Nfft/Nwindows), Nfft/Frac_Overlap, [], 1/T_Q(runloop), 'onesided');
+    
+    if(
+    
+    
+    
+   
+    
+end
+fc=fc+1;
