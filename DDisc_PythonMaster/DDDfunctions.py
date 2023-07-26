@@ -2,18 +2,19 @@ import ctypes
 import sys
 import dwfconstants as dwfc
 import time
+import pyvisa
 
 
 
 def loadDwf():                          # TO LOAD DWF 
     if sys.platform.startswith("win"):
-        dwf = cdll.dwf
+        dwf = ctypes.cdll.dwf
     elif sys.platform.startswith("darwin"):
-        dwf = cdll.LoadLibrary("/Library/Frameworks/dwf.framework/dwf")
+        dwf = ctypes.cdll.LoadLibrary("/Library/Frameworks/dwf.framework/dwf")
     else:
-        dwf = cdll.LoadLibrary("libdwf.so")
+        dwf = ctypes.cdll.LoadLibrary("libdwf.so")
 
-    version = create_string_buffer(16)
+    version = ctypes.create_string_buffer(16)
     dwf.FDwfGetVersion(version)
     print("DWF Version: ", version.value)
     return dwf
@@ -23,25 +24,26 @@ def closeDevice(dwf):           # TO DSICONNECT DWF DEVICES
 
 def openDevice(dwf):
 
-    hdwf = c_int()
-    dwf.FDwfDeviceOpen(c_int(-1), byref(hdwf))
+    hdwf = ctypes.c_int()
+    dwf.FDwfDeviceOpen(ctypes.c_int(-1), ctypes.byref(hdwf))
 
     if hdwf.value == 0:
         print("failed to open device")
-        szerr = create_string_buffer(512)
+        szerr = ctypes.create_string_buffer(512)
         dwf.FDwfGetLastErrorMsg(szerr)
         print(str(szerr.value))
         quit()
     # Set the logic voltage to 2.5V
-    dwf.FDwfAnalogIOChannelNodeSet(hdwf, 0, 0, c_double(2.5))
+    dwf.FDwfAnalogIOChannelNodeSet(hdwf, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_double(2.5))
     return hdwf
 
 def acqisitionSetup(dwf, hdwf, N_samp, CLK_Chan, edge):
     dwf.FDwfDigitalInAcquisitionModeSet(hdwf, dwfc.acqmodeRecord)  # Setting Record mode
-    dwf.FDwfDigitalInDividerSet(hdwf, c_int(-1))  # Divider needs to be -1 for sync
-    dwf.FDwfDigitalInSampleFormatSet(hdwf, c_int(32))  # Setting to 32 bit per sample format
-    dwf.FDwfDigitalInTriggerPositionSet(hdwf, c_int(N_samp))  # Setting the number of samples to record for
-    dwf.FDwfDigitalInTriggerSet(hdwf, c_int(0), c_int(0), c_int(edge << CLK_Chan), c_int((not edge) << CLK_Chan))  # Setting the trigger, the syntax here is ...TriggerSet(hdwf, low, high, rising, falling), channel desired is the bit position
+    dwf.FDwfDigitalInDividerSet(hdwf, ctypes.c_int(-1))  # Divider needs to be -1 for sync
+    dwf.FDwfDigitalInBufferSizeSet(hdwf, ctypes.c_int(N_samp))
+    dwf.FDwfDigitalInSampleFormatSet(hdwf, ctypes.c_int(32))  # Setting to 32 bit per sample format
+    dwf.FDwfDigitalInTriggerPositionSet(hdwf, ctypes.c_int(N_samp))  # Setting the number of samples to record for
+    dwf.FDwfDigitalInTriggerSet(hdwf, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(edge << CLK_Chan), ctypes.c_int((not edge) << CLK_Chan))  # Setting the trigger, the syntax here is ...TriggerSet(hdwf, low, high, rising, falling), channel desired is the bit position
 
 
 
@@ -59,7 +61,7 @@ def i2cConfig(dwf, hdwf, RateSet, SCL, SDA):        # CONFIGURE DEVICE FOR I2C P
     dwf.FDwfDigitalI2cSdaSet(hdwf, ctypes.c_int(SDA))
 
     dwf.FDwfAnalogIOChannelNodeSet(hdwf, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_double(2.5))  # Sets the voltage level to 2.5 volts 
-    dwf.FDwfAnalogIOEnableSet(hdwf, c_int(1))
+    dwf.FDwfAnalogIOEnableSet(hdwf, ctypes.c_int(1))
 
     dwf.FDwfAnalogIOChannelNodeSet(hdwf, ctypes.c_int(0), ctypes.c_int(2), ctypes.c_double(0x0003)) # Enables Pull Up/Down on DIO24 (bit0=1: 1) and DIO25 (bit1=1: 2) to give 0x03
     dwf.FDwfAnalogIOChannelNodeSet(hdwf, ctypes.c_int(0), ctypes.c_int(3), ctypes.c_double(0x0003)) # Sets the DIO24 (bit0) and DIO25 (bit1) to 1 for pull up = 0x03 

@@ -246,10 +246,10 @@ if __name__ == '__main__':
             #k += 1
         #f.close()
 
-        #fig1 = plt.figure(1)
-        #fig1.clear()
-        #plt.plot(raw_output, '*-')
-        #plt.grid(which='both', axis='both')
+        fig1 = plt.figure(1)
+        fig1.clear()
+        plt.plot(raw_output, '*-')
+        plt.grid(which='both', axis='both')
 
         fig2 = plt.figure(2)
         fig2.clear()
