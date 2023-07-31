@@ -16,12 +16,12 @@ if __name__ == "__main__":
 
 
     # Stimulation Settings
-    F_ref = 200e6
+    F_ref = 400e6
     f_in = 100e3
-    IinDC = 1e-6
+    IinDC = 1.9e-6
     AmplStart_Ipk = 1e-9
-    AmplStop_Ipk = 0.25e-6
-    NoAmplSteps = 100
+    AmplStop_Ipk = 1.9e-6
+    NoAmplSteps = 20
     
     # Acquisition Settings
     N_samp = 262144
@@ -49,12 +49,12 @@ if __name__ == "__main__":
         ddf.acqisitionSetup(dwf=dwfL, hdwf=dwfH, N_samp=N_samp, CLK_Chan=acqCLKChan, edge=1)
 
         # Configure the SR1
-        VinDC = (IinDC/Rin) + 0.6125
+        VinDC = (IinDC*Rin) + 0.6125
         SR1 = ddf.initialiseSR1()
         SR1chanIDs = ddf.configureSR1(SR1=SR1, f_in=f_in, Voffs=VinDC)
 
         # Calculate T_Q
-        T_ref = 1/200e6
+        T_ref = 1/F_ref
         T_Q = T_ref/66
 
         # Calculate Voltage Sweep Amplitudes
@@ -123,7 +123,7 @@ if __name__ == "__main__":
             # Set the SR1 output amplitude
             SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(SR1chanIDs.get('DC', 0), VinDC)) # Updating the DC offset of the function generator if necessary
             SR1.write(":AnlgGen:Ch(0):Sine({:d}):Amp {:.12g} VPP".format(SR1chanIDs.get('Sine', 0), (2*AmplSweep[k]))) # Updating the sine wave amplitude for this element in the sweep
-            #time.sleep(0.1)
+            time.sleep(0.1)
 
             # Arm the acquisition trigger
             dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))

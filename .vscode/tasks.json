@@ -6,7 +6,7 @@
             "file": "./testScripts/sramManualFill.py",
             "label": "Profile sramManualFill.py",
             "options": {
-                "env": {"PYTHONPATH": "${workspaceFolder}/DDisc_PythonMaster/"}
+                "env": {"PYTHONPATH": "${workspaceFolder}/DDisc_PythonMaster/:${workspaceFolder}/pythonTools/"}
             }
         }
     ]

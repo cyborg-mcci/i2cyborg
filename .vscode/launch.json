@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "env": {"PYTHONPATH": "${workspaceFolder}/DDisc_PythonMaster/"},
+            "env": {"PYTHONPATH": "${workspaceFolder}/DDisc_PythonMaster/:${workspaceFolder}/pythonTools/"},
             "console": "integratedTerminal",
             "justMyCode": true
         }
