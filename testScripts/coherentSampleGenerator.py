@@ -76,6 +76,9 @@ if __name__ == "__main__":
     mCyc = nPrime.nearestPrime( (f_in_des * T_Q) * ((nSamp/nWindows) +  (nPulses*LSBcorr)) )
     f_in = mCyc / ( ( (nSamp/nWindows) + (nPulses*LSBcorr)) * T_Q )
 
+    # Print the output
+    print("Coherent Requirements:\nMcyc={:d}\nf_in={:f}".format(mCyc, f_in))
+
     
         
 
