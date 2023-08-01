@@ -17,14 +17,14 @@ if __name__ == "__main__":
 
     # Stimulation Settings
     F_ref = 400e6
-    f_in = 100e3
+    f_in = 95987.319946
     IinDC = 1.9e-6
     AmplStart_Ipk = 1e-9
     AmplStop_Ipk = 1.9e-6
     NoAmplSteps = 20
     
     # Acquisition Settings
-    N_samp = 262144
+    N_samp = 2**16
     acqCLKChan = 0
     edge = 1 # 1 for rising edge triggering, 0 for falling edge triggering
 
@@ -149,8 +149,8 @@ if __name__ == "__main__":
                 cSamples += cAvailable.value
             
             rawOutput = np.asarray(rgwSamples)
-            #rawOutput = (rawOutput & 0b0000000000001)
-            rawOutput = (rawOutput & 0b0111111111110) + ((rawOutput & 0b1000000000000)>>12)
+            #rawOutput = (rawOutput & 0b0111111111110) + ((rawOutput & 0b1000000000000)>>12) # Using the default low speed cable
+            rawOutput = ((rawOutput & 0b0000011110000)>>4) + ((rawOutput & 0b0111100000000)>>4) + ((rawOutput & 0b1111000000000000)>>4) # Using the custom cable
             rawOutput = rawOutput.astype(np.int32)
             outFilename = "{:d}".format(k)
             np.savetxt("{:s}/{:s}.csv".format(outDirName, outFilename), rawOutput, fmt="%d", delimiter=",")

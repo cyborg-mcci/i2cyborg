@@ -7,7 +7,7 @@ def isPrime(n):
   return True
 
 def nearestPrime(x):
-    if( not isinstance(x, int) or not isinstance(x, float) ):
+    if( not (isinstance(x, int) or isinstance(x, float)) ):
         print("Error: Input can only be a single scalar or float")
         exit
 
