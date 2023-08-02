@@ -18,14 +18,14 @@ if __name__ == "__main__":
 
     # Stimulation Settings
     F_ref = 400e6
-    f_in = 95987.319946
+    f_in = 88119.506836
     IinDC = 1.9e-6
     AmplStart_Ipk = 1e-9
     AmplStop_Ipk = 1.9e-6
     NoAmplSteps = 20
     
     # Acquisition Settings
-    N_samp = 2**16
+    N_samp = 2**17
     acqCLKChan = 0
     edge = 1 # 1 for rising edge triggering, 0 for falling edge triggering
 
@@ -151,7 +151,12 @@ if __name__ == "__main__":
             
             rawOutput = np.asarray(rgwSamples)
             #rawOutput = (rawOutput & 0b0111111111110) + ((rawOutput & 0b1000000000000)>>12) # Using the default low speed cable
-            rawOutput = ((rawOutput & 0b0000011110000)>>4) + ((rawOutput & 0b0111100000000)>>4) + ((rawOutput & 0b1111000000000000)>>4) # Using the custom cable
+            # Using the custom cable
+            rawOutputUpper  = br.reverseNibble((rawOutput & 0xF000) >> 12)
+            rawOutputMid    = (rawOutput & 0x0F00) >> 8
+            rawOutputLower  = br.reverseNibble((rawOutput & 0x0F0) >> 4)
+            rawOutput = (rawOutputUpper << 8) + (rawOutputMid << 4) + rawOutputLower
+
             rawOutput = rawOutput.astype(np.int32)
             outFilename = "{:d}".format(k)
             np.savetxt("{:s}/{:s}.csv".format(outDirName, outFilename), rawOutput, fmt="%d", delimiter=",")
@@ -163,19 +168,24 @@ if __name__ == "__main__":
             
             dOutput = np.diff(rawOutput)
             plt.figure(2)
-            plt.plot(dOutput, '*'); plt.grid()
+            plt.plot(dOutput, '*'); 
+            plt.grid()
 
             # plt.figure(2)
             # plt.hist(rawOutput, bins=4096)
             # plt.grid()
 
         ddf.closeDevice(dwf=dwfL)
+        # Disable the output of the SR1
+        SR1.write(":AnlgGen:Ch(0):On False")
 
 
     
 
     except Exception:
         ddf.closeDevice(dwf=dwfL)
+        # Disable the output of the SR1
+        SR1.write(":AnlgGen:Ch(0):On False")
         
         
         

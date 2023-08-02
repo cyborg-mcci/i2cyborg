@@ -92,7 +92,7 @@ def i2cRead(dwf, hdwf, nak, addr, reg):         # I2C READ FUNCTION
 
     bufferR = (ctypes.c_ubyte * 1)()
 
-    dwf.FDwfDigitalI2cWriteRead(hdwf, ctypes.c_int(addr << 1), (c_ubyte*1)(reg), ctypes.c_int(1), bufferR, ctypes.c_int(1), ctypes.byref(nak))
+    dwf.FDwfDigitalI2cWriteRead(hdwf, ctypes.c_int(addr << 1), (ctypes.c_ubyte*1)(reg), ctypes.c_int(1), bufferR, ctypes.c_int(1), ctypes.byref(nak))
 
     dataR = [int(element) for element in bufferR]
 
