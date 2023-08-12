@@ -90,7 +90,8 @@ end
 %% Looping through the files
 fc=fc+1;
 
-for runloop = 1:length(dataPoint)
+for runloop = 1:length(LSBcorr)
+
 %for runloop = 10
     fprintf('Progress: %d/%d points\n\n', runloop, length(dataPoint));
 

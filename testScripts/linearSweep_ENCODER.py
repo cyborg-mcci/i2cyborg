@@ -18,23 +18,22 @@ if __name__ == "__main__":
 
     # Stimulation Settings
     F_ref = 1400e6
-    f_in = 107002.258301
-    IinDC = 6e-6
-    AmplStart_Ipk = 1e-9
-    AmplStop_Ipk = 2e-6
-    NoAmplSteps = 201
+    
+    # Sweep Parameters
+    inputStart  = -50e-9
+    inputStop   = 5e-6
+    inputSteps  = 1000
     
     # Acquisition Settings
-    N_samp = 2**18
+    N_samp = 2**14
     acqCLKChan = 0
     edge = 1 # 1 for rising edge triggering, 0 for falling edge triggering
 
-    # Post-Processing Settings
-    
-    NBW = 1e6
-    outDirName = "outputdata/" + input("Input the Filename and hit Enter to start the acquisition:") #prompting the user for the directory name
+    # Postprocessing Settings
+    outDirName = "outputdata/linearENC/" + input("Input the Filename and hit Enter to start the acquisition:") #prompting the user for the directory name
     if not os.path.exists(outDirName):
         os.makedirs(outDirName)
+
 
     try:
         # Load the DWF library
@@ -49,29 +48,24 @@ if __name__ == "__main__":
         # Configure the Data Acquisition
         ddf.acqisitionSetup(dwf=dwfL, hdwf=dwfH, N_samp=N_samp, CLK_Chan=acqCLKChan, edge=1)
 
-        # Configure the SR1
-        VinDC = (IinDC*Rin) + 0.6125
-        SR1 = ddf.initialiseSR1()
-        SR1chanIDs = ddf.configureSR1(SR1=SR1, f_in=f_in, Voffs=1.2)
+        # Configure the SMU
+        SMU = ddf.initialiseSMU()
+        ddf.configureSMU(SMU)
 
         # Calculate T_Q
         T_ref = 1/F_ref
         T_Q = T_ref/66
 
-        # Calculate Voltage Sweep Amplitudes
-        AmplStart_Vpk = AmplStart_Ipk * Rin
-        AmplStop_Vpk = AmplStop_Ipk * Rin
-
-        # Creating the Amplitude Sweep
-        AmplSweep = np.logspace(math.log10(AmplStart_Vpk), math.log10(AmplStop_Vpk), num=NoAmplSteps, base=10.0)
+        # Creating the input current sweep
+        inputSweep = np.linspace(inputStart, inputStop, num=inputSteps)
 
         # Creating the datapoint vector
         dataPoints = np.arange(start=0, stop=NoAmplSteps, step=1)
 
         # Creating the metadata table
-        metaTable = [['dataPoint'] + dataPoints.tolist(), ['Iin_pk'] + (AmplSweep/Rin).tolist(), \
-            ['T_Q'] + [T_Q] * dataPoints.size, ['f_in'] + [f_in] * dataPoints.size, \
-            ['I_DC'] + [IinDC] * dataPoints.size, ['N_samp'] + [N_samp] * dataPoints.size, \
+        metaTable = [['dataPoint'] + dataPoints.tolist(), ['Iin'] + (inputSweep).tolist(), \
+            ['T_Q'] + [T_Q] * dataPoints.size, \
+            ['N_samp'] + [N_samp] * dataPoints.size, \
             ['testTime'] + [time.strftime('%H:%M %d/%b/%Y', time.localtime())] * dataPoints.size]
 
         # Writing the metadata table to a csv file
@@ -82,20 +76,12 @@ if __name__ == "__main__":
         
  
 
-        # Enable the output of the SR1
-        SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(SR1chanIDs.get('DC', 0), 1.2))
-        SR1.write(":AnlgGen:Ch(0):On True")
-        
+        # Ensure the PPONG is going
+        SMU.write("OUTP1 ON")  # Turning on the channel
+        SMU.write("SOUR1:CURR 10e-9") # Starting a trickle current
         input("Perform a RST, then hit any key to continue...")
 
-        # Resetting the AFE since the SR1 being off will pull PPong into latch
-        # nak = ddf.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2c.i2cAddress, reg=i2c.i2cPWRCNTLReg, data=0x00) # Turn off the PPONG
-        # nak = ddf.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2c.i2cAddress, reg=i2c.i2cPWRCNTLReg, data=0x00)
-        # nak = ddf.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2c.i2cAddress, reg=i2c.i2cPWRCNTLReg, data=0x00)
-        # for k in range(1,20):
-        #     nak = ddf.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2c.i2cAddress, reg=i2c.i2cPWRCNTLReg, data=0x02) # Turn ON the PPONG
-        
-        
+                
 
         sts = ctypes.c_byte()
         rgwSamples = (ctypes.c_uint32 * N_samp)()
@@ -106,11 +92,7 @@ if __name__ == "__main__":
         fLost = 0
         fCorrupted = 0
 
-        # Performing an initial acquisition to clear the pipes
-        # ddf.closeDevice(dwf=dwfL) # Closing and re-opening bc it can't go into acq mode after i2c writes?
-        # dwfH = ddf.openDevice(dwfL)
-        # nak = ddf.i2cConfig(dwf=dwfL, hdwf=dwfH, RateSet=i2c.i2cRate, SCL=i2c.i2cSCL, SDA=i2c.i2cSDA)
-        # ddf.acqisitionSetup(dwf=dwfL, hdwf=dwfH, N_samp=N_samp, CLK_Chan=acqCLKChan, edge=1)
+        
 
         dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))
         cSamples = 0
@@ -135,13 +117,11 @@ if __name__ == "__main__":
             cSamples += cAvailable.value
 
 
-        for k in dataPoints: 
-            print("\n\nSetting the amplitude: {:.4f}uApk which translates to {:.6f}Vpk".format(AmplSweep[k]*1e6/Rin, AmplSweep[k]))
+        for k in dataPoints:
+            print("\n\n{:%d}/{:%d}: Setting the input current: {:.4g}uApk".format(k, inputSteps, inputSweep[k]*1e6))
 
-            # Set the SR1 output amplitude
-            SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(SR1chanIDs.get('DC', 0), VinDC)) # Updating the DC offset of the function generator if necessary
-            SR1.write(":AnlgGen:Ch(0):Sine({:d}):Amp {:.12g} VPP".format(SR1chanIDs.get('Sine', 0), (2*AmplSweep[k]))) # Updating the sine wave amplitude for this element in the sweep
-            time.sleep(0.1)
+            SMU.write("SOUR1:CURR {:.12g}".format(inputSweep[k]))
+            time.sleep(1)
 
             # Arm the acquisition trigger
             dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))
@@ -193,20 +173,18 @@ if __name__ == "__main__":
             # plt.grid()
 
         ddf.closeDevice(dwf=dwfL)
-        # Disable the output of the SR1
-        SR1.write(":AnlgGen:Ch(0):On False")
-        SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(SR1chanIDs.get('DC', 0), 1.2)) # Ensure SR1 is at a safe voltage for next time
-        SR1.write(":AnlgGen:Ch(0):Sine({:d}):Amp {:.12g} VPP".format(SR1chanIDs.get('Sine', 0), 0))
+        # Disable the output of the SMU
+        SMU.write("OUTP1 OFF")  # Turning off the channel
+        SMU.write("SOUR1:CURR 0") # Turning off the current
 
 
     
 
     except Exception:
         ddf.closeDevice(dwf=dwfL)
-        # Disable the output of the SR1
-        SR1.write(":AnlgGen:Ch(0):On False")
-        SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(SR1chanIDs.get('DC', 0), 1.2)) # Ensure SR1 is at a safe voltage for next time
-        SR1.write(":AnlgGen:Ch(0):Sine({:d}):Amp {:.12g} VPP".format(SR1chanIDs.get('Sine', 0), 0))
+        # Disable the output of the SMU
+        SMU.write("OUTP1 OFF")  # Turning off the channel
+        SMU.write("SOUR1:CURR 0")
         
         
         

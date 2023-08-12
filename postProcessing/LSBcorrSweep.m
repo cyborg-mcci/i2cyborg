@@ -58,7 +58,8 @@ NBW = 1e6; % Noise Bandwidth for SNR etc
 f_NF = [100 500]*1e3; % Noisefloor frequency limits to estimate thermal noisefloor
 
 % Postprocessing DSP Parameters
-LSB_CORR = 0;
+LSB_CORR = 0:30;
+dataPointSel = 201;
 
 % Timecode File Readin Parameters
 foldername = 'BT2CT2_lockFix_1p4GFlk_1p04Vddd';
@@ -90,13 +91,14 @@ end
 %% Looping through the files
 fc=fc+1;
 
-for runloop = 1:length(dataPoint)
+for runloop = 1:length(LSB_CORR)
+
 %for runloop = 10
-    fprintf('Progress: %d/%d points\n\n', runloop, length(dataPoint));
+    fprintf('Progress: %d/%d points, LSBcorr = %d\n\n', runloop, length(LSB_CORR), LSB_CORR(runloop));
 
 
     % Extracting the raw data from the data file
-	encRaw = load(strcat(filenames(runloop).folder, '/', sprintf('%d', dataPoint(runloop)), '.csv'));
+	encRaw = load(strcat(filenames(dataPointSel).folder, '/', sprintf('%d', dataPoint(dataPointSel)), '.csv'));
 	
     	% Plotting the raw data as a sanity check
 	if(plotRaw)
@@ -105,7 +107,7 @@ for runloop = 1:length(dataPoint)
         hold on
 		plot(0:length(encRaw)-1, encRaw, '-*')
 		grid on
-		title(sprintf('Edge timecounts for $I_{IN}^{pk} = %.3f \\mathrm{\\mu A}$', Iin_pk(runloop)*1e6))
+		title(sprintf('Edge timecounts for $I_{IN}^{pk} = %.3f \\mathrm{\\mu A}$', Iin_pk(dataPointSel)*1e6))
 		xlabel('Sample')
 		ylabel('Time Encoded Count')
         
@@ -143,18 +145,22 @@ for runloop = 1:length(dataPoint)
        title('Difference Between Subsequent Counts')
     end
     
+    % Performing Nonlinearity Correction
+    LSB_CORR_to_subtract = (0:length(encUnwrap)-1) .* LSB_CORR(runloop);
+	count_corr = encUnwrap - LSB_CORR_to_subtract';
+    
     % Trimming the enc output to avoid huge data
-    logNenc = floor(log2(max(encUnwrap)));
+    logNenc = floor(log2(max(count_corr)));
     %encUnwrap(encUnwrap >= 1.05*min(2^logNenc, Nwindows*N_FFTmax)) = [];
-    encUnwrap(encUnwrap < 1) = []; % trimming negative results since time starts at index 1 (t=0)
+    count_corr(count_corr < 1) = []; % trimming negative results since time starts at index 1 (t=0)
     
     % Creating a time vector
-    t = 0:T_Q(runloop):T_Q(runloop)*max(encUnwrap);
+    t = 0:T_Q(runloop):T_Q(runloop)*max(count_corr);
    
     
     % Creating an equivalent sampled output
     DFFout = zeros(size(t));
-    DFFout(encUnwrap) = 1;
+    DFFout(count_corr) = 1;
     
     % Trimming to nearest 2^N
     Nfft = floor(log2(length(t)));
@@ -188,7 +194,7 @@ for runloop = 1:length(dataPoint)
        clf
        semilogx(metrics{runloop}.f, metrics{runloop}.Dout_f_dBc)
        grid on
-       title(sprintf('PSD Plot for $I_{IN}^{pk} = %.3f~\\mathrm{\\mu A}$', 1e6*Iin_pk(runloop)))
+       title(sprintf('PSD Plot for $I_{IN}^{pk} = %.3f~\\mathrm{\\mu A}, LSB_CORR = %d$', 1e6*Iin_pk(dataPointSel), LSB_CORR(runloop)))
        xlabel('Frequency (Hz)')
        ylabel('PSD $\mathrm{[A/\surd Hz]}$')
 	   set(gca, 'xscale', 'log')
@@ -207,6 +213,7 @@ fc=fc+4;
     saveData.Nwindows = Nwindows;
     saveData.Nfft = Nfft;
     %saveData.metrics = metrics;
+    saveData.LSB_CORR = LSB_CORR
 
 %% Plotting the SNDR 
 for k = 1:length(metrics)
@@ -218,6 +225,7 @@ for k = 1:length(metrics)
    saveData.THD(k) = metrics{k}.THD;
    saveData.SNR(k) = metrics{k}.SNR;
    saveData.SNDR(k) = metrics{k}.SNDR;
+   
    %saveData.f{k} = metrics{k}.f;
    %saveData.Dout_f_dBc{k} = metrics{k}.Dout_f_dBc;
    
@@ -238,9 +246,9 @@ end
 fc=fc+1
 figure(fc)
 clf
-plot(Iin_pk, saveData.SNDR, '-*', Iin_pk, saveData.SNR, Iin_pk, -saveData.THD);
+plot(LSB_CORR, saveData.SNDR, '-*', LSB_CORR, saveData.SNR, LSB_CORR, -saveData.THD, LSB_CORR, -saveData.H2_over_H1, LSB_CORR, -saveData.H3_over_H1);
 grid on
-legend('SNDR', 'SNR', '-THD')
+legend('SNDR', 'SNR', '-THD', 'HD2', 'HD3')
 xlabel('Peak Input Current ($I_{in}^{pk}$) $\mathrm{[A^{pk}]}$')
 ylabel('$\mathrm{[dB]}$')
 set(gca, 'Xscale', 'log')

@@ -183,3 +183,18 @@ def configureSMU(inst):
     # inst.write("TRIG:SOUR AINT")
 
 
+def initialiseDSO6000():
+    rm = pyvisa.ResourceManager()
+    inst = rm.open_resource('USB0::0x0957::0x1780::MY59381226::INSTR')
+    print(inst.query("*IDN?"))
+    return inst
+
+def configureDSO6000(inst):
+    inst.write("COUN:ENAB")
+    inst.write("COUN:MODE FREQ")
+    inst.write("COUN:NDIG 8")
+    inst.write("COUN:SOUR CHAN3")
+    inst.write("COUN:ENAB")
+
+
+
