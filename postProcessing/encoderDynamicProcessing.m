@@ -43,7 +43,7 @@ profile on
 %% Parameter Declaration
 
 % Configuration Switches
-plotRaw			= 0; % Plot the raw time domain input data or not
+plotRaw			= 1; % Plot the raw time domain input data or not
 plotFFT         = 1;
 plotOutTime		= 0; % Plot the NUSDSP output data in time domain or not
 
@@ -61,7 +61,7 @@ f_NF = [100 500]*1e3; % Noisefloor frequency limits to estimate thermal noiseflo
 LSB_CORR = 0;
 
 % Timecode File Readin Parameters
-foldername = 'BT2CT2_lockFix_1p4GFlk_1p04Vddd';
+foldername = 'B1C1_Rin100k_Flk1p51G_Vref0p6';
 
 
 datadir = strcat('../outputdata/', foldername, '/');
@@ -91,7 +91,7 @@ end
 fc=fc+1;
 
 for runloop = 1:length(dataPoint)
-%for runloop = 10
+%for runloop = 19
     fprintf('Progress: %d/%d points\n\n', runloop, length(dataPoint));
 
 
@@ -167,7 +167,7 @@ for runloop = 1:length(dataPoint)
        clf
        hold on
        %stairs(t, DFFout, '*-')
-       stairs(t(1:1e4), movmean(DFFout(1:1e4), 50), '--')
+       stairs(t(1:1e7), movmean(DFFout(1:1e7), 1e6), '--')
        xlabel('Sampled Time $\mathrm{[s]}$')
        ylabel('Output')
        title('Effective Sampled Encoder Output')
@@ -218,8 +218,8 @@ for k = 1:length(metrics)
    saveData.THD(k) = metrics{k}.THD;
    saveData.SNR(k) = metrics{k}.SNR;
    saveData.SNDR(k) = metrics{k}.SNDR;
-   %saveData.f{k} = metrics{k}.f;
-   %saveData.Dout_f_dBc{k} = metrics{k}.Dout_f_dBc;
+   saveData.f{k} = metrics{k}.f;
+   saveData.Dout_f_dBc{k} = metrics{k}.Dout_f_dBc;
    
    
    

@@ -59,10 +59,10 @@ f_NF = [100 500]*1e3; % Noisefloor frequency limits to estimate thermal noiseflo
 
 % Postprocessing DSP Parameters
 LSB_CORR = 0:30;
-dataPointSel = 201;
+dataPointSel = 188;
 
 % Timecode File Readin Parameters
-foldername = 'BT2CT2_lockFix_1p4GFlk_1p04Vddd';
+foldername = 'B1C1_stabFix_Flk1p51G_Ib4u_vref1p4';
 
 
 datadir = strcat('../outputdata/', foldername, '/');
@@ -194,7 +194,7 @@ for runloop = 1:length(LSB_CORR)
        clf
        semilogx(metrics{runloop}.f, metrics{runloop}.Dout_f_dBc)
        grid on
-       title(sprintf('PSD Plot for $I_{IN}^{pk} = %.3f~\\mathrm{\\mu A}, LSB_CORR = %d$', 1e6*Iin_pk(dataPointSel), LSB_CORR(runloop)))
+       title(sprintf('PSD Plot for $I_{IN}^{pk} = %.3f~\\mathrm{\\mu A}, LSB_{CORR} = %d$', 1e6*Iin_pk(dataPointSel), LSB_CORR(runloop)))
        xlabel('Frequency (Hz)')
        ylabel('PSD $\mathrm{[A/\surd Hz]}$')
 	   set(gca, 'xscale', 'log')

@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # Sweep Parameters
     inputStart  = -50e-9
     inputStop   = 5e-6
-    inputSteps  = 1000
+    inputSteps  = 2000
     
     # Acquisition Settings
     N_samp = 2**14
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         inputSweep = np.linspace(inputStart, inputStop, num=inputSteps)
 
         # Creating the datapoint vector
-        dataPoints = np.arange(start=0, stop=NoAmplSteps, step=1)
+        dataPoints = np.arange(start=0, stop=inputSteps, step=1)
 
         # Creating the metadata table
         metaTable = [['dataPoint'] + dataPoints.tolist(), ['Iin'] + (inputSweep).tolist(), \
@@ -116,12 +116,12 @@ if __name__ == "__main__":
             dwfL.FDwfDigitalInStatusData(dwfH, ctypes.byref(rgwSamples,4*cSamples), ctypes.c_int(4 * cAvailable.value))
             cSamples += cAvailable.value
 
-
+        ppDeadCounter = 0
         for k in dataPoints:
-            print("\n\n{:%d}/{:%d}: Setting the input current: {:.4g}uApk".format(k, inputSteps, inputSweep[k]*1e6))
+            print("\n\n{:d}/{:d}: Setting the input current: {:.4g}uApk".format(k, inputSteps, inputSweep[k]*1e6))
 
             SMU.write("SOUR1:CURR {:.12g}".format(inputSweep[k]))
-            time.sleep(1)
+            time.sleep(0.2)
 
             # Arm the acquisition trigger
             dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))
@@ -140,9 +140,18 @@ if __name__ == "__main__":
                 if cCorrupted.value:
                     fCorrupted = 1
                 if cAvailable.value == 0:
+                    ppDeadCounter+=1
+                    if(ppDeadCounter > 100):
+                        input("PPONG stalled. Perform a RST, then hit any key to continue...")
+                        dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))
+                        ppDeadCounter = 0
                     continue
                 if cSamples + cAvailable.value > N_samp:
+                    ppDeadCounter = 0
                     cAvailable = ctypes.c_int(N_samp - cSamples)
+
+                
+                    
                 dwfL.FDwfDigitalInStatusData(dwfH, ctypes.byref(rgwSamples,4*cSamples), ctypes.c_int(4 * cAvailable.value))
                 cSamples += cAvailable.value
             

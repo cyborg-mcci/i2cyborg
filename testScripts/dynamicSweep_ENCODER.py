@@ -13,19 +13,19 @@ import byteReverse as br
 if __name__ == "__main__":
 
     # Physical Setup
-    Rin = 2.2e6
+    Rin = 100e3
 
 
     # Stimulation Settings
-    F_ref = 1400e6
+    F_ref = 1515.151515152e6
     f_in = 107002.258301
-    IinDC = 6e-6
+    IinDC = 5e-6
     AmplStart_Ipk = 1e-9
-    AmplStop_Ipk = 2e-6
+    AmplStop_Ipk = 4.5e-6
     NoAmplSteps = 201
     
     # Acquisition Settings
-    N_samp = 2**18
+    N_samp = 2**17
     acqCLKChan = 0
     edge = 1 # 1 for rising edge triggering, 0 for falling edge triggering
 
@@ -86,7 +86,19 @@ if __name__ == "__main__":
         SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(SR1chanIDs.get('DC', 0), 1.2))
         SR1.write(":AnlgGen:Ch(0):On True")
         
-        input("Perform a RST, then hit any key to continue...")
+        # Trying to write the GB amplifier OFF and get the PPONG running
+        # running = False
+        # while running is not True:
+        #     nak = ddf.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2c.i2cAddress, reg=i2c.i2cAFECNTLReg, data=0x01)
+
+        #     nak = ddf.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2c.i2cAddress, reg=i2c.i2cPWRCNTLReg, data=0x00)
+        #     nak = ddf.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2c.i2cAddress, reg=i2c.i2cPWRCNTLReg, data=0x02)
+
+        #     if(input("Is the CCO Running? [y/n]:") == "y"):
+        #         running = True
+            
+
+        input("Hold RSTBCLK, then hit any key to continue...")
 
         # Resetting the AFE since the SR1 being off will pull PPong into latch
         # nak = ddf.i2cWrite(dwf=dwfL, hdwf=dwfH, nak=nak, addr=i2c.i2cAddress, reg=i2c.i2cPWRCNTLReg, data=0x00) # Turn off the PPONG
@@ -107,10 +119,10 @@ if __name__ == "__main__":
         fCorrupted = 0
 
         # Performing an initial acquisition to clear the pipes
-        # ddf.closeDevice(dwf=dwfL) # Closing and re-opening bc it can't go into acq mode after i2c writes?
-        # dwfH = ddf.openDevice(dwfL)
-        # nak = ddf.i2cConfig(dwf=dwfL, hdwf=dwfH, RateSet=i2c.i2cRate, SCL=i2c.i2cSCL, SDA=i2c.i2cSDA)
-        # ddf.acqisitionSetup(dwf=dwfL, hdwf=dwfH, N_samp=N_samp, CLK_Chan=acqCLKChan, edge=1)
+        ddf.closeDevice(dwf=dwfL) # Closing and re-opening bc it can't go into acq mode after i2c writes?
+        dwfH = ddf.openDevice(dwfL)
+        nak = ddf.i2cConfig(dwf=dwfL, hdwf=dwfH, RateSet=i2c.i2cRate, SCL=i2c.i2cSCL, SDA=i2c.i2cSDA)
+        ddf.acqisitionSetup(dwf=dwfL, hdwf=dwfH, N_samp=N_samp, CLK_Chan=acqCLKChan, edge=1)
 
         dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))
         cSamples = 0
@@ -179,14 +191,14 @@ if __name__ == "__main__":
             np.savetxt("{:s}/{:s}.csv".format(outDirName, outFilename), rawOutput, fmt="%d", delimiter=",")
             
             
-            plt.figure(1)
-            plt.plot(rawOutput, '*-')
-            plt.grid()
+            # plt.figure(1)
+            # plt.plot(rawOutput, '*-')
+            # plt.grid()
             
-            dOutput = np.diff(rawOutput)
-            plt.figure(2)
-            plt.plot(dOutput, '*'); 
-            plt.grid()
+            # dOutput = np.diff(rawOutput)
+            # plt.figure(2)
+            # plt.plot(dOutput, '*'); 
+            # plt.grid()
 
             # plt.figure(2)
             # plt.hist(rawOutput, bins=4096)

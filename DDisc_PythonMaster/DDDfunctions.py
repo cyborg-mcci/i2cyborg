@@ -182,6 +182,26 @@ def configureSMU(inst):
 
     # inst.write("TRIG:SOUR AINT")
 
+def configureVoltSMU(inst):
+    inst.write("*RST")
+    #inst.write("*CLR")
+    inst.query(":SYST:ERR:ALL?")
+    inst.write(":SYST:BEEP:STAT ON")
+
+    inst.write("OUTP1 OFF")  # Turning off the channel
+
+    inst.write("SOUR1:FUNC VOLT")  # Sourcing settings
+    inst.write("SOUR1:VOLT:MODE FIXED")  # Sourcing settings
+    inst.write("SOUR1:VOLT:RANG:AUTO ON") #Set the voltage range to auto mode
+    inst.write("SOUR1:VOLT:LEV 0")  # Set the output voltage to 0 initially
+    inst.write("SENS:CURR:PROT 10E-3")
+    inst.write("SENS1:FUNC \"CURR\"")    # Set the sensing to current
+    inst.write("SENS:CURR:RANG 10e-3")  # Set the current sensing range to Auto
+    inst.write("FORM:ELEM CURR") # Set the readout to just current
+    
+
+    # inst.write("TRIG:SOUR AINT")
+
 
 def initialiseDSO6000():
     rm = pyvisa.ResourceManager()
@@ -193,7 +213,7 @@ def configureDSO6000(inst):
     inst.write("COUN:ENAB")
     inst.write("COUN:MODE FREQ")
     inst.write("COUN:NDIG 8")
-    inst.write("COUN:SOUR CHAN3")
+    inst.write("COUN:SOUR CHAN2")
     inst.write("COUN:ENAB")
 
 
