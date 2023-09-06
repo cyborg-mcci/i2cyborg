@@ -157,6 +157,35 @@ def configureSR1(SR1, f_in, Voffs):
     }
     return chanIDs
 
+def configureDCSR1(SR1, Vinitial):
+    SR1.write("*CLS") # Clears the status Register
+
+    #First ensuring the channels are off before anything blows up
+    SR1.write(":AnlgGen:Ch(0):On False") # Disables the output 0
+    SR1.write(":AnlgGen:Ch(1):On False") # Disables the output 1
+
+    # Setting the Analog Generator configuration
+    SR1.write(":AnlgGen:ConnectorConfig aoUnbalGnd") # Sets the output channels to use the BNC connector
+    SR1.write(":AnlgGen:Zout aozBal50Un25") # Sets the output impedance to LowZ
+    SR1.write(":AnlgGen:Mono True") # Sets Mono mode, as opposed to stereo mode
+    SR1.write(":AnlgGen:SampleRate agHz512k") # Sets the sample rate of the analog generator
+    SR1.write(":AnlgGen:BurstMode bmNone") # Ensures burst mode is turned off  
+
+    # Channel 0 configuration
+    SR1.write(":AnlgGen:Ch(0):Gain 100 PCT") # Sets the channel gain to 100%
+    SR1.write(":AnlgGen:Ch(0):ClearWaveforms") # Clears any existing waveforms in the channel
+
+    # Configuring the DC Offset
+    chanID_offs = int(SR1.query(":AnlgGen:Ch(0):AddWaveform? awfDC")) # Create a DC Offset and add it to the channel 0. chanID_offs is the ID of this channel
+    SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(chanID_offs, Voffs)) # Sets the DC offset of the offset object on channel 0 to Voffs
+    SR1.write(":AnlgGen:Ch(0):DC({:d}):On True".format(chanID_offs)) # Turns on the DC offset object of channel 0
+
+
+    chanIDs  = { # Creating a dictionary lookup for the DC offset and sin functions to be returned and used elsewhere in the script
+        'DC':   chanID_offs,
+    }
+    return chanIDs
+
 def initialiseSMU():
     rm = pyvisa.ResourceManager()
     inst = rm.open_resource("USB0::0x0403::0x6001::FTYUXLL3::RAW")
