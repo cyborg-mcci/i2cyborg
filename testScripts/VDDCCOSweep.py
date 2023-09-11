@@ -15,18 +15,18 @@ import re
 if __name__ == "__main__":
     # Test Details
     Flck = 1515.151515152e6
-    VDDTQ = 1.2
+    VDDCCO = 1.2
 
     # Sweep Parameters
     inputStart  = -50e-9
     inputStop   = 10e-6
-    inputSteps  = 500
+    inputSteps  = 1000
 
     # Physical Setup
     Rin = 100e3
 
 
-    outDirName = "outputdata/VDDTQSweep/" + input("Input the Filename and hit Enter to start the acquisition:") #prompting the user for the directory name
+    outDirName = "outputdata/VDDCCOSweep/" + input("Input the Filename and hit Enter to start the acquisition:") #prompting the user for the directory name
     if not os.path.exists(outDirName):
         os.makedirs(outDirName)
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
         # Creating the metadata table
         metaTable = [['dataPoint'] + dataPoints.tolist(), ['Iin'] + (inputSweep).tolist(), \
-            ['R_in'] + [Rin] * dataPoints.size, ['Flck'] + [Flck] * dataPoints.size, ['VDDTQ'] + [VDDTQ] * dataPoints.size, \
+            ['R_in'] + [Rin] * dataPoints.size, ['Flck'] + [Flck] * dataPoints.size, ['VDDCCO'] + [VDDCCO] * dataPoints.size, \
             ['testTime'] + [time.strftime('%H:%M %d/%b/%Y', time.localtime())] * dataPoints.size]
 
         # Writing the metadata table to a csv file
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
         # Ensure the PPONG is going
         SMU.write("OUTP1 ON")  # Turning on the channel
-        SMU.write("SOUR1:VOLT:LEV {:.6g}".format(VDDTQ)) # Starting a trickle current
+        SMU.write("SOUR1:VOLT:LEV {:g}".format(VDDCCO)) # Starting a trickle current
 
         # Enable the output of the SR1
         SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(SR1chanIDs.get('DC', 0), 1.2))
@@ -136,8 +136,8 @@ if __name__ == "__main__":
         plt.grid()
 
         plt.figure(2)
-        plt.plot(inputSweep[16:-1:16], np.diff(freq[0:-1:16])/np.diff(inputSweep[0:-1:16]), label="Diff2 Method")
-        plt.plot(inputSweep, freq/inputSweep, label="Division Method")
+        plt.plot(inputSweep[8:-1:8], np.diff(freq[0:-1:8])/np.diff(inputSweep[0:-1:8]), '-*', label="Diff2 Method")
+        plt.plot(inputSweep, freq/inputSweep, '-*', label="Division Method")
         plt.grid()
         plt.xlabel("Input Voltage [V]")
         plt.ylabel("Ring Kvco [MHz/V]")

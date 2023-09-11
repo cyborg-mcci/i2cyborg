@@ -177,7 +177,7 @@ def configureDCSR1(SR1, Vinitial):
 
     # Configuring the DC Offset
     chanID_offs = int(SR1.query(":AnlgGen:Ch(0):AddWaveform? awfDC")) # Create a DC Offset and add it to the channel 0. chanID_offs is the ID of this channel
-    SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(chanID_offs, Voffs)) # Sets the DC offset of the offset object on channel 0 to Voffs
+    SR1.write(":AnlgGen:Ch(0):DC({:d}):Amp {:.12g}".format(chanID_offs, Vinitial)) # Sets the DC offset of the offset object on channel 0 to Voffs
     SR1.write(":AnlgGen:Ch(0):DC({:d}):On True".format(chanID_offs)) # Turns on the DC offset object of channel 0
 
 
@@ -201,8 +201,14 @@ def configureSMU(inst):
     inst.write("OUTP1 OFF")  # Turning off the channel
 
     inst.write("SOUR1:FUNC:MODE curr")  # Sourcing settings
+    inst.write("SOUR1:CURR:MODE FIXED")
     inst.write("SOUR1:CURR:RANG:AUTO ON")
-    inst.write("SOUR1:CURR 0")
+    inst.write("SOUR1:CURR:LEV 0")
+    inst.write("SENS:VOLT:PROT 10")
+    inst.write("SEBS1:FUNC \"VOLT\"")
+    inst.write("SENS:VOLT:RANG 10")
+    inst.write("FORM:ELEM VOLT")
+    
 
 
     #inst.write(":SENS1:FUNC volt")
@@ -211,7 +217,7 @@ def configureSMU(inst):
 
     # inst.write("TRIG:SOUR AINT")
 
-def configureVoltSMU(inst):
+def configureVoltSMU(inst, currLim):
     inst.write("*RST")
     #inst.write("*CLR")
     inst.query(":SYST:ERR:ALL?")
@@ -223,9 +229,9 @@ def configureVoltSMU(inst):
     inst.write("SOUR1:VOLT:MODE FIXED")  # Sourcing settings
     inst.write("SOUR1:VOLT:RANG:AUTO ON") #Set the voltage range to auto mode
     inst.write("SOUR1:VOLT:LEV 0")  # Set the output voltage to 0 initially
-    inst.write("SENS:CURR:PROT 10E-3")
+    inst.write("SENS:CURR:PROT {:g}".format(currLim))
     inst.write("SENS1:FUNC \"CURR\"")    # Set the sensing to current
-    inst.write("SENS:CURR:RANG 10e-3")  # Set the current sensing range to Auto
+    inst.write("SENS:CURR:RANG {:g}".format(currLim))  # Set the current sensing range to Auto
     inst.write("FORM:ELEM CURR") # Set the readout to just current
     
 
@@ -238,11 +244,11 @@ def initialiseDSO6000():
     print(inst.query("*IDN?"))
     return inst
 
-def configureDSO6000(inst):
+def configureDSO6000(inst, counterChan=2):
     inst.write("COUN:ENAB")
     inst.write("COUN:MODE FREQ")
     inst.write("COUN:NDIG 8")
-    inst.write("COUN:SOUR CHAN2")
+    inst.write("COUN:SOUR CHAN{:d}".format(counterChan))
     inst.write("COUN:ENAB")
 
 
