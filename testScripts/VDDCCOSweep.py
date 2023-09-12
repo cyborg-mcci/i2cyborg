@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # Sweep Parameters
     inputStart  = -50e-9
     inputStop   = 10e-6
-    inputSteps  = 1000
+    inputSteps  = 500
 
     # Physical Setup
     Rin = 100e3
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
         # Initialise & Configure the Scope
         SCOPE = ddf.initialiseDSO6000()
-        ddf.configureDSO6000(inst=SCOPE, counterChan=1) 
+        ddf.configureDSO6000(inst=SCOPE, counterChan=2) 
 
         # Configure the SR1
         SR1 = ddf.initialiseSR1()

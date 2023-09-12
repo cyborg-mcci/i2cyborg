@@ -205,15 +205,10 @@ def configureSMU(inst):
     inst.write("SOUR1:CURR:RANG:AUTO ON")
     inst.write("SOUR1:CURR:LEV 0")
     inst.write("SENS:VOLT:PROT 10")
-    inst.write("SEBS1:FUNC \"VOLT\"")
+    inst.write("SENS1:FUNC \"VOLT\"")
     inst.write("SENS:VOLT:RANG 10")
     inst.write("FORM:ELEM VOLT")
     
-
-
-    #inst.write(":SENS1:FUNC volt")
-    inst.write("SENS1:VOLT:PROT 50") # Measure Settings
-    inst.write("SENS1:VOLT:RANG:AUTO ON")
 
     # inst.write("TRIG:SOUR AINT")
 
@@ -247,7 +242,7 @@ def initialiseDSO6000():
 def configureDSO6000(inst, counterChan=2):
     inst.write("COUN:ENAB")
     inst.write("COUN:MODE FREQ")
-    inst.write("COUN:NDIG 8")
+    inst.write("COUN:NDIG 7")
     inst.write("COUN:SOUR CHAN{:d}".format(counterChan))
     inst.write("COUN:ENAB")
 

@@ -191,14 +191,14 @@ if __name__ == "__main__":
             np.savetxt("{:s}/{:s}.csv".format(outDirName, outFilename), rawOutput, fmt="%d", delimiter=",")
             
             
-            # plt.figure(1)
-            # plt.plot(rawOutput, '*-')
-            # plt.grid()
+            plt.figure(1)
+            plt.plot(rawOutput, '*-')
+            plt.grid()
             
-            # dOutput = np.diff(rawOutput)
-            # plt.figure(2)
-            # plt.plot(dOutput, '*'); 
-            # plt.grid()
+            dOutput = np.diff(rawOutput)
+            plt.figure(2)
+            plt.plot(dOutput, '*'); 
+            plt.grid()
 
             # plt.figure(2)
             # plt.hist(rawOutput, bins=4096)
