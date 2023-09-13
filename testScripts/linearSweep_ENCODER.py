@@ -9,18 +9,19 @@ import ctypes
 import matplotlib.pyplot as plt
 import pandas as pa
 import byteReverse as br
+import re
 
 if __name__ == "__main__":
 
     # Physical Setup
-    Rin = 2.2e6
+    Rin = 100e3
 
 
     # Stimulation Settings
-    F_ref = 1400e6
+    F_ref = 400e6
     
     # Sweep Parameters
-    inputStart  = -50e-9
+    inputStart  = 0e-9
     inputStop   = 5e-6
     inputSteps  = 2000
     
@@ -62,6 +63,9 @@ if __name__ == "__main__":
         # Creating the datapoint vector
         dataPoints = np.arange(start=0, stop=inputSteps, step=1)
 
+        # Creating the voltage vector
+        volt = np.zeros(inputSweep.shape[0])
+
         # Creating the metadata table
         metaTable = [['dataPoint'] + dataPoints.tolist(), ['Iin'] + (inputSweep).tolist(), \
             ['T_Q'] + [T_Q] * dataPoints.size, \
@@ -78,7 +82,7 @@ if __name__ == "__main__":
 
         # Ensure the PPONG is going
         SMU.write("OUTP1 ON")  # Turning on the channel
-        SMU.write("SOUR1:CURR 10e-9") # Starting a trickle current
+        SMU.write("SOUR1:CURR:LEV 10e-9") # Starting a trickle current
         input("Perform a RST, then hit any key to continue...")
 
                 
@@ -120,8 +124,18 @@ if __name__ == "__main__":
         for k in dataPoints:
             print("\n\n{:d}/{:d}: Setting the input current: {:.4g}uApk".format(k, inputSteps, inputSweep[k]*1e6))
 
-            SMU.write("SOUR1:CURR {:.12g}".format(inputSweep[k]))
-            time.sleep(0.2)
+            SMU.write("SOUR1:CURR:LEV {:g}".format(inputSweep[k]))
+            time.sleep(0.3)
+            tmp = SMU.query("READ?")
+
+            while True:
+                try:           
+                   volt[k] = float(re.findall(r'\x01\x00(.*)\r', tmp)[0])
+                except Exception:
+                    time.sleep(0.75)
+                    tmp = SMU.query("READ?")
+                    continue
+                break
 
             # Arm the acquisition trigger
             dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))
@@ -145,6 +159,15 @@ if __name__ == "__main__":
                         input("PPONG stalled. Perform a RST, then hit any key to continue...")
                         dwfL.FDwfDigitalInConfigure(dwfH, ctypes.c_bool(0), ctypes.c_bool(1))
                         ppDeadCounter = 0
+                        tmp = SMU.query("READ?")
+                        while True:
+                            try:           
+                                volt[k] = float(re.findall(r'\x01\x00(.*)\r', tmp)[0])
+                            except Exception:
+                                time.sleep(0.75)
+                                tmp = SMU.query("READ?")
+                                continue
+                            break
                     continue
                 if cSamples + cAvailable.value > N_samp:
                     ppDeadCounter = 0
@@ -166,6 +189,8 @@ if __name__ == "__main__":
             rawOutput = rawOutput.astype(np.int32)
             outFilename = "{:d}".format(k)
             np.savetxt("{:s}/{:s}.csv".format(outDirName, outFilename), rawOutput, fmt="%d", delimiter=",")
+
+            
             
             
             plt.figure(1)
@@ -184,7 +209,10 @@ if __name__ == "__main__":
         ddf.closeDevice(dwf=dwfL)
         # Disable the output of the SMU
         SMU.write("OUTP1 OFF")  # Turning off the channel
-        SMU.write("SOUR1:CURR 0") # Turning off the current
+        SMU.write("SOUR1:CURR:LEV 0") # Turning off the current
+
+        outFilename = "itov"
+        np.savetxt("{:s}/{:s}.csv".format(outDirName, outFilename), np.transpose(np.vstack((inputSweep, volt))), fmt="%.12g", delimiter=",")
 
 
     
@@ -193,7 +221,7 @@ if __name__ == "__main__":
         ddf.closeDevice(dwf=dwfL)
         # Disable the output of the SMU
         SMU.write("OUTP1 OFF")  # Turning off the channel
-        SMU.write("SOUR1:CURR 0")
+        SMU.write("SOUR1:CURR:LEV 0") # Turning off the current
         
         
         

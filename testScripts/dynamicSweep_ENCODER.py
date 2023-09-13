@@ -13,16 +13,16 @@ import byteReverse as br
 if __name__ == "__main__":
 
     # Physical Setup
-    Rin = 100e3
+    Rin = 604e3
 
 
     # Stimulation Settings
-    F_ref = 1515.151515152e6
+    F_ref = 1000e6
     f_in = 107002.258301
-    IinDC = 5e-6
+    IinDC = 6e-6
     AmplStart_Ipk = 1e-9
-    AmplStop_Ipk = 4.5e-6
-    NoAmplSteps = 201
+    AmplStop_Ipk = 5.5e-6
+    NoAmplSteps = 401
     
     # Acquisition Settings
     N_samp = 2**17

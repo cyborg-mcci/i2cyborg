@@ -14,13 +14,13 @@ import re
 
 if __name__ == "__main__":
     # Test Details
-    Flck = 1515.151515152e6
-    VDDD = 1.1
+    Flck = 400e6
+    VDDD = 0.75
 
     # Sweep Parameters
     inputStart  = -50e-9
     inputStop   = 10e-6
-    inputSteps  = 500
+    inputSteps  = 250
 
     # Physical Setup
     Rin = 100e3
@@ -34,11 +34,11 @@ if __name__ == "__main__":
 
         # Initialise & Configure the SMU
         SMU = ddf.initialiseSMU()
-        ddf.configureVoltSMU(inst=SMU, currLim = 100e-3)
+        ddf.configureVoltSMU(inst=SMU, currLim = 10e-3)
 
         # Initialise & Configure the Scope
         SCOPE = ddf.initialiseDSO6000()
-        ddf.configureDSO6000(inst=SCOPE, counterChan=2) 
+        ddf.configureDSO6000(inst=SCOPE, counterChan=1) 
 
         # Configure the SR1
         SR1 = ddf.initialiseSR1()
